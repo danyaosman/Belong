@@ -43,11 +43,6 @@ class User(Base):
         nullable=False,
     )
 
-    is_verified: Mapped[bool] = mapped_column(
-        Boolean,
-        default=False,
-        nullable=False,
-    )
 
-    current_lesson = relationship("Lesson")
+    #current_lesson = relationship("Lesson")
     

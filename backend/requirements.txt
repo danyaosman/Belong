@@ -3,7 +3,6 @@ uvicorn[standard]
 
 sqlalchemy
 psycopg[binary]
-alembic
 
 python-dotenv
 
@@ -12,6 +11,7 @@ passlib[bcrypt]
 
 pydantic
 pydantic-settings
+email-validator
 
 python-multipart
 
