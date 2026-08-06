@@ -12,7 +12,7 @@ class LessonRepository:
 
         return (
             db.query(Lesson)
-            .order_by(Lesson.order)
+            .order_by(Lesson.lesson_number)
             .all()
         )
 

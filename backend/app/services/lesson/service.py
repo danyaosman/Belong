@@ -2,6 +2,10 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.repositories.lesson_repository import LessonRepository
+from app.services.vocabulary.service import get_lesson_vocabulary
+from app.services.grammar.service import get_lesson_grammar
+from app.services.exercise.service import get_lesson_exercises
+from app.schemas.lesson import LessonContentResponse
 
 lesson_repository = LessonRepository()
 
@@ -29,3 +33,24 @@ def get_lesson(
         )
 
     return lesson
+
+def get_lesson_content(
+    db: Session,
+    lesson_id: int,
+):
+    lesson = get_lesson(db, lesson_id)
+
+    return LessonContentResponse(
+    id=lesson.id,
+    title=lesson.title,
+    description=lesson.description,
+    level=lesson.level,
+    lesson_number=lesson.lesson_number,
+    conversation_context=lesson.conversation_context,
+    conversation_goal=lesson.conversation_goal,
+    success_criteria=lesson.success_criteria,
+    thumbnail_url=lesson.thumbnail_url,
+    vocabulary=get_lesson_vocabulary(db, lesson_id),
+    grammar=get_lesson_grammar(db, lesson_id),
+    exercises=get_lesson_exercises(db, lesson_id),
+)
