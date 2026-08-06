@@ -10,4 +10,4 @@ from app.models.vocabulary import Vocabulary
 from app.models.grammar import Grammar
 from app.models.exercise import Exercise
 from app.models.exercise_option import ExerciseOption
-
+from app.models.character import Character

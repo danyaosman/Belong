@@ -41,6 +41,7 @@ def seed_lesson(json_file: Path, db):
         conversation_goal=data["conversation"]["goal"],
         success_criteria=data["conversation"]["success_criteria"],
         thumbnail_url=data.get("thumbnail_url"),
+        character_id=data["character_id"]
     )
 
     db.add(lesson)

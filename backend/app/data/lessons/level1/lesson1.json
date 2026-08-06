@@ -3,6 +3,7 @@
   "description": "Learn how to greet people, introduce yourself and say goodbye in Turkish.",
   "level": 1,
   "lesson_number": 1,
+  "character_id": 1,
 
   "conversation": {
     "context": "You meet someone for the first time in Istanbul.",

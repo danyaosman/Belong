@@ -1,5 +1,6 @@
 from sqlalchemy import Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import ForeignKey
 
 from app.db.base import Base
 
@@ -17,14 +18,23 @@ class Lesson(Base):
 
     lesson_number: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    thumbnail_url: Mapped[str | None] = mapped_column(String(255))
-
     conversation_context: Mapped[str] = mapped_column(Text)
 
     conversation_goal: Mapped[str] = mapped_column(Text)
 
     success_criteria: Mapped[str] = mapped_column(Text)
 
+    thumbnail_url: Mapped[str | None] = mapped_column(String(255))
+
+    character_id: Mapped[int] = mapped_column(
+        ForeignKey("characters.id"),
+        nullable=False,
+    )
+
+    character = relationship(
+        "Character",
+        back_populates="lessons",
+    )
     vocabulary = relationship(
         "Vocabulary",
         back_populates="lesson",
