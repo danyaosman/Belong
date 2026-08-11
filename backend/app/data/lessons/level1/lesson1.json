@@ -6,9 +6,79 @@
   "character_id": 1,
 
   "conversation": {
-    "context": "You meet someone for the first time in Istanbul.",
-    "goal": "Greet them, introduce yourself and end the conversation politely.",
-    "success_criteria": "The learner greets the person, says their name and says goodbye politely."
+    "context": "You meet Dilara at university in Istanbul for the first time.",
+    "goal": "Introduce yourself and have a short first conversation.",
+    "success_criteria": [
+      "Greet Dilara",
+      "Say your name",
+      "Ask Dilara's name",
+      "Say where you are from",
+      "Ask where Dilara is from",
+      "Say goodbye"
+    ],
+
+    "steps": [
+      {
+        "id": 1,
+        "character_prompt": "Greet the learner and ask their name.",
+        "expected_intent": "greet_and_introduce",
+        "target_phrases": [
+          "Merhaba",
+          "Benim adım ...",
+          "Ben ... "
+        ],
+        "hint": "You can say: Merhaba! Benim adım Danya.",
+        "required": true
+      },
+      {
+        "id": 2,
+        "character_prompt": "Ask the learner where they are from.",
+        "expected_intent": "say_origin",
+        "target_phrases": [
+          "Ben ...'danım",
+          "Ben ...'denim",
+          "Ben ...liyim"
+        ],
+        "hint": "You can say: Ben İstanbul'danım.",
+        "required": true
+      },
+      {
+        "id": 3,
+        "character_prompt": "Ask the learner what they study.",
+        "expected_intent": "talk_about_studies",
+        "target_phrases": [
+          "Ben öğrenciyim",
+          "Ben yazılım okuyorum",
+          "Üniversitede okuyorum"
+        ],
+        "hint": "You can say: Üniversitede okuyorum.",
+        "required": true
+      },
+      {
+        "id": 4,
+        "character_prompt": "Ask the learner about their hobbies.",
+        "expected_intent": "talk_about_hobbies",
+        "target_phrases": [
+          "Kitap okumayı seviyorum",
+          "Müzik dinlemeyi seviyorum",
+          "Film izlemeyi seviyorum"
+        ],
+        "hint": "You can say: Müzik dinlemeyi seviyorum.",
+        "required": true
+      },
+      {
+        "id": 5,
+        "character_prompt": "End the conversation politely and say goodbye.",
+        "expected_intent": "say_goodbye",
+        "target_phrases": [
+          "Görüşürüz",
+          "Hoşça kal",
+          "Güle güle"
+        ],
+        "hint": "You can say: Görüşürüz!",
+        "required": true
+      }
+    ]  
   },
 
   "vocabulary": [
