@@ -9,7 +9,7 @@ from app.models.exercise import Exercise
 from app.models.exercise_option import ExerciseOption
 
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "app" / "data" / "lessons"
+DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "lessons"
 
 
 def seed_lesson(json_file: Path, db):

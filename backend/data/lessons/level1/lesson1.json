@@ -9,30 +9,29 @@
     "context": "You meet Dilara at university in Istanbul for the first time.",
     "goal": "Introduce yourself and have a short first conversation.",
     "success_criteria": [
-      "Greet Dilara",
-      "Say your name",
-      "Ask Dilara's name",
+      "Greet Dilara and introduce yourself",
       "Say where you are from",
-      "Ask where Dilara is from",
-      "Say goodbye"
+      "Talk about what you study",
+      "Talk about your hobbies",
+      "Say goodbye politely"
     ],
 
     "steps": [
       {
         "id": 1,
-        "character_prompt": "Greet the learner and ask their name.",
+        "character_message": "Merhaba! Ben Dilara. Senin adın ne?",
         "expected_intent": "greet_and_introduce",
         "target_phrases": [
           "Merhaba",
           "Benim adım ...",
-          "Ben ... "
+          "Ben ..."
         ],
-        "hint": "You can say: Merhaba! Benim adım Danya.",
+        "hint": "You can say: Merhaba! Benim adım..",
         "required": true
       },
       {
         "id": 2,
-        "character_prompt": "Ask the learner where they are from.",
+        "character_message": "Memnun oldum! Nerelisin?",
         "expected_intent": "say_origin",
         "target_phrases": [
           "Ben ...'danım",
@@ -44,7 +43,7 @@
       },
       {
         "id": 3,
-        "character_prompt": "Ask the learner what they study.",
+        "character_message": "Ben de İstanbul'da üniversite okuyorum. Sen ne okuyorsun?",
         "expected_intent": "talk_about_studies",
         "target_phrases": [
           "Ben öğrenciyim",
@@ -56,7 +55,7 @@
       },
       {
         "id": 4,
-        "character_prompt": "Ask the learner about their hobbies.",
+        "character_message": "Anladım! Peki, hobilerin neler?",
         "expected_intent": "talk_about_hobbies",
         "target_phrases": [
           "Kitap okumayı seviyorum",
@@ -68,7 +67,7 @@
       },
       {
         "id": 5,
-        "character_prompt": "End the conversation politely and say goodbye.",
+        "character_message": "Seninle tanıştığıma memnun oldum! Görüşürüz!",
         "expected_intent": "say_goodbye",
         "target_phrases": [
           "Görüşürüz",
@@ -78,7 +77,7 @@
         "hint": "You can say: Görüşürüz!",
         "required": true
       }
-    ]  
+    ]
   },
 
   "vocabulary": [

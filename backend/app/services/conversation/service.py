@@ -15,6 +15,12 @@ from app.repositories.convo_message_repository import (
 )
 from app.repositories.lesson_repository import LessonRepository
 
+from app.services.conversation.script_loader import (
+    load_lesson_script,
+)
+from app.services.conversation.evaluator import (
+    evaluate_response,
+)
 
 def start_conversation(
     db: Session,
@@ -112,6 +118,30 @@ def send_message(
             detail="Message cannot be empty.",
         )
 
+    lesson = conversation.lesson
+
+    script = load_lesson_script(
+        lesson.level,
+        lesson.lesson_number,
+    )
+
+    steps = script["conversation"]["steps"]
+
+    current_step = next(
+        (
+            step
+            for step in steps
+            if step["id"] == conversation.current_step
+        ),
+        None,
+    )
+
+    if current_step is None:
+        raise HTTPException(
+            status_code=500,
+            detail="Current conversation step not found.",
+        )
+
     user_message = ConversationMessage(
         conversation_id=conversation.id,
         sender=MessageSender.USER,
@@ -123,11 +153,71 @@ def send_message(
         user_message,
     )
 
-    # Temporary response until Gemini is implemented.
+    evaluation = evaluate_response(
+        message,
+        current_step,
+    )
+
+    if not evaluation["correct"]:
+        character_message = ConversationMessage(
+            conversation_id=conversation.id,
+            sender=MessageSender.CHARACTER,
+            message=evaluation["feedback"],
+        )
+
+        conversation_message_repository.create(
+            db,
+            character_message,
+        )
+
+        db.commit()
+
+        return {
+            "correct": False,
+            "message": character_message.message,
+            "hint": evaluation["hint"],
+            "current_step": conversation.current_step,
+            "completed": False,
+        }
+
+    next_step_id = conversation.current_step + 1
+
+    if next_step_id > len(steps):
+        conversation.status = ConversationStatus.COMPLETED
+
+        character_message = ConversationMessage(
+            conversation_id=conversation.id,
+            sender=MessageSender.CHARACTER,
+            message=current_step["character_message"],
+        )
+
+        conversation_message_repository.create(
+            db,
+            character_message,
+        )
+
+        db.commit()
+
+        return {
+            "correct": True,
+            "message": character_message.message,
+            "hint": None,
+            "current_step": conversation.current_step,
+            "completed": True,
+        }
+
+    conversation.current_step = next_step_id
+
+    next_step = next(
+        step
+        for step in steps
+        if step["id"] == next_step_id
+    )
+
     character_message = ConversationMessage(
         conversation_id=conversation.id,
         sender=MessageSender.CHARACTER,
-        message="Merhaba! Ben Dilara. Senin adın ne?",
+        message=next_step["character_message"],
     )
 
     conversation_message_repository.create(
@@ -135,7 +225,15 @@ def send_message(
         character_message,
     )
 
-    return character_message
+    db.commit()
+
+    return {
+        "correct": True,
+        "message": character_message.message,
+        "hint": None,
+        "current_step": conversation.current_step,
+        "completed": False,
+    }
 
 
 def get_conversation_messages(

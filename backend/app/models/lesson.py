@@ -52,3 +52,8 @@ class Lesson(Base):
         back_populates="lesson",
         cascade="all, delete-orphan",
     )
+
+    conversations = relationship(
+    "Conversation",
+    back_populates="lesson",
+    )

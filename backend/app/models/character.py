@@ -48,3 +48,8 @@ class Character(Base):
         "Lesson",
         back_populates="character",
     )
+
+    conversations = relationship(
+    "Conversation",
+    back_populates="character",
+    )

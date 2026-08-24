@@ -7,7 +7,6 @@ from app.repositories.character_repository import CharacterRepository
 
 DATA_DIR = (
     Path(__file__).resolve().parent.parent
-    / "app"
     / "data"
     / "characters"
 )

@@ -2,14 +2,14 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-
+from app.dependencies.get_current_user import get_current_user
 from app.schemas.conversation import (
     ConversationResponse,
     ConversationStart,
+    ConversationTurnResponse,
     MessageCreate,
     MessageResponse,
 )
-
 from app.services.conversation.service import (
     get_conversation,
     get_conversation_messages,
@@ -18,14 +18,12 @@ from app.services.conversation.service import (
     start_conversation,
 )
 
-# Change this import to match your existing authentication dependency.
-from app.dependencies.get_current_user import get_current_user
-
 
 router = APIRouter(
     prefix="/conversations",
     tags=["Conversations"],
 )
+
 
 @router.post(
     "/start",
@@ -42,6 +40,7 @@ def create_conversation(
         data.lesson_id,
     )
 
+
 @router.get(
     "/{conversation_id}",
     response_model=ConversationResponse,
@@ -57,6 +56,7 @@ def read_conversation(
         current_user.id,
     )
 
+
 @router.get(
     "",
     response_model=list[ConversationResponse],
@@ -70,9 +70,10 @@ def read_user_conversations(
         current_user.id,
     )
 
+
 @router.post(
     "/{conversation_id}/messages",
-    response_model=MessageResponse,
+    response_model=ConversationTurnResponse,
 )
 def create_message(
     conversation_id: int,
@@ -86,6 +87,7 @@ def create_message(
         current_user.id,
         data.message,
     )
+
 
 @router.get(
     "/{conversation_id}/messages",

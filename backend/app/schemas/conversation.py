@@ -35,3 +35,11 @@ class MessageResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ConversationTurnResponse(BaseModel):
+    correct: bool
+    message: str
+    hint: str | None = None
+    current_step: int
+    completed: bool

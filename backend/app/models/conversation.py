@@ -59,6 +59,16 @@ class Conversation(Base):
         nullable=True,
     )
 
+    lesson = relationship(
+        "Lesson",
+        back_populates="conversations",
+    )
+
+    character = relationship(
+        "Character",
+        back_populates="conversations",
+    )
+
     messages = relationship(
         "ConversationMessage",
         back_populates="conversation",
