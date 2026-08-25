@@ -6,6 +6,10 @@ import {
   View,
 } from "react-native";
 
+interface LessonScreenProps{
+    onBack: () => void;
+}
+
 import ExerciseRenderer from "../components/exercises/ExerciseRenderer";
 import { COLORS } from "../theme/colors";
 import { Exercise, Lesson } from "../types/lesson";
@@ -174,7 +178,9 @@ const lesson: Lesson = {
   ],
 };
 
-export default function LessonScreen() {
+export default function LessonScreen({
+    onBack,
+}: LessonScreenProps) {
   return (
     <View style={styles.container}>
       <ScrollView
@@ -183,7 +189,11 @@ export default function LessonScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton}>
+          <TouchableOpacity 
+          style={styles.backButton}
+          onPress={onBack}
+          activeOpacity={0.7}
+          >
             <Text style={styles.backText}>‹</Text>
           </TouchableOpacity>
 

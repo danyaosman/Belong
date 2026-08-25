@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import {
   SafeAreaView,
   StyleSheet,
@@ -7,11 +8,21 @@ import {
 } from "react-native";
 
 import { COLORS } from "./theme/colors";
+import LessonScreen from "./screens/LessonScreen";
 
 export default function App() {
+  const [screen, setScreen] = useState<"home" | "lesson">("home");
+
+  if (screen === "lesson") {
+    return (
+      <LessonScreen
+        onBack={() => setScreen("home")}
+      />
+    );
+  }
+
   return (
     <View style={styles.container}>
-      {/* Everything except bottom navigation stays in safe area */}
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
           <Text style={styles.logo}>Belong</Text>
@@ -27,22 +38,37 @@ export default function App() {
           <Text style={styles.title}>Greetings</Text>
 
           <View style={styles.lessonPath}>
-            <TouchableOpacity style={styles.lessonNode}>
-              <Text style={styles.nodeText}>★</Text>
-            </TouchableOpacity>
-
+            {/* LESSON 1 */}
             <TouchableOpacity
-              style={[styles.lessonNode, styles.offset]}
+              style={styles.lessonNode}
+              onPress={() => {
+                console.log("LEESON PRESSED");
+                setScreen("lesson");}}
+              activeOpacity={0.8}
             >
               <Text style={styles.nodeText}>★</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.lessonNode}>
+            {/* LESSON 2 */}
+            <TouchableOpacity
+              style={[styles.lessonNode, styles.offset]}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.nodeText}>★</Text>
+            </TouchableOpacity>
+
+            {/* LISTENING */}
+            <TouchableOpacity
+              style={styles.lessonNode}
+              activeOpacity={0.8}
+            >
               <Text style={styles.nodeText}>🎧</Text>
             </TouchableOpacity>
 
+            {/* LESSON 4 */}
             <TouchableOpacity
               style={[styles.lessonNode, styles.offset]}
+              activeOpacity={0.8}
             >
               <Text style={styles.nodeText}>★</Text>
             </TouchableOpacity>
@@ -50,7 +76,7 @@ export default function App() {
         </View>
       </SafeAreaView>
 
-      {/* Full-width bottom navigation */}
+      {/* Bottom navigation */}
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.navButton}>
           <Text style={styles.navItem}>⌂</Text>
