@@ -4,6 +4,21 @@ from pydantic import BaseModel
 
 from app.models.conversation import ConversationStatus
 
+class ConversationStepResponse(BaseModel):
+    id: int
+    character_message: str
+    expected_intent: str
+    target_phrases: list[str]
+    hint: str
+    required: bool
+
+
+class ConversationContentResponse(BaseModel):
+    context: str
+    goal: str
+    success_criteria: list[str]
+
+
 
 class ConversationStart(BaseModel):
     lesson_id: int

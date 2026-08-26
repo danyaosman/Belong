@@ -6,6 +6,7 @@ from app.schemas.lesson import LessonResponse, LessonContentResponse
 from app.schemas.vocabulary import VocabularyResponse
 from app.schemas.grammar import GrammarResponse
 from app.schemas.exercise import ExerciseResponse
+from app.schemas.conversation import ConversationContentResponse
 
 from app.services.lesson.service import (
     get_lesson,
@@ -25,6 +26,9 @@ from app.services.grammar.service import (
 from app.services.exercise.service import (
     get_lesson_exercises,
     get_exercise,
+)
+from app.services.conversation.service import (
+    get_lesson_conversation,
 )
 
 router = APIRouter(
@@ -106,6 +110,21 @@ def read_lesson_exercises(
     db: Session = Depends(get_db),
 ):
     return get_lesson_exercises(
+        db,
+        lesson_id,
+    )
+
+
+# retrieves convo context
+@router.get(
+    "/{lesson_id}/conversation",
+    response_model=ConversationContentResponse,
+)
+def read_lesson_conversation(
+    lesson_id: int,
+    db: Session = Depends(get_db),
+):
+    return get_lesson_conversation(
         db,
         lesson_id,
     )

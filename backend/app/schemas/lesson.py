@@ -11,6 +11,7 @@ class LessonResponse(BaseModel):
     description: str
     level: int
     lesson_number: int
+    character_id: int
     thumbnail_url: str | None
 
     model_config = {
@@ -19,10 +20,6 @@ class LessonResponse(BaseModel):
 
 
 class LessonContentResponse(LessonResponse):
-    conversation_context: str
-    conversation_goal: str
-    success_criteria: str
-
     vocabulary: list[VocabularyResponse]
     grammar: list[GrammarResponse]
     exercises: list[ExerciseResponse]

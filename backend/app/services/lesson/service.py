@@ -43,12 +43,10 @@ def get_lesson_content(
     return LessonContentResponse(
     id=lesson.id,
     title=lesson.title,
+    character_id=lesson.character_id,
     description=lesson.description,
     level=lesson.level,
     lesson_number=lesson.lesson_number,
-    conversation_context=lesson.conversation_context,
-    conversation_goal=lesson.conversation_goal,
-    success_criteria=lesson.success_criteria,
     thumbnail_url=lesson.thumbnail_url,
     vocabulary=get_lesson_vocabulary(db, lesson_id),
     grammar=get_lesson_grammar(db, lesson_id),

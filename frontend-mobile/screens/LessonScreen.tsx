@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Animated,
   ScrollView,
@@ -9,223 +9,38 @@ import {
 } from "react-native";
 
 import ExerciseRenderer from "../components/exercises/ExerciseRenderer";
+import { getLesson, getLessonConversation } from "../services/lessonService";
 import { COLORS } from "../theme/colors";
-import { Lesson } from "../types/lesson";
+import { Lesson, ConversationContent } from "../types/lesson";
 
 interface LessonScreenProps {
+  lessonId: number;
   onBack: () => void;
 }
 
-const lesson: Lesson = {
-  title: "Greetings",
-  description:
-    "Learn how to greet people, introduce yourself and say goodbye in Turkish.",
-  level: 1,
-  lesson_number: 1,
-  character_id: 1,
-
-  conversation: {
-    context:
-      "You meet Dilara at university in Istanbul for the first time.",
-    goal: "Introduce yourself and have a short first conversation.",
-    success_criteria: [
-      "Greet Dilara and introduce yourself",
-      "Say where you are from",
-      "Talk about what you study",
-      "Talk about your hobbies",
-      "Say goodbye politely",
-    ],
-    steps: [
-      {
-        id: 1,
-        character_message:
-          "Merhaba! Ben Dilara. Senin adın ne?",
-        target_phrases: [
-          "Merhaba",
-          "Benim adım ...",
-          "Ben ...",
-        ],
-        hint: "You can say: Merhaba! Benim adım..",
-      },
-      {
-        id: 2,
-        character_message:
-          "Memnun oldum! Nerelisin?",
-        target_phrases: [
-          "Ben ...'danım",
-          "Ben ...'denim",
-          "Ben ...liyim",
-        ],
-        hint: "You can say: Ben İstanbul'danım.",
-      },
-      {
-        id: 3,
-        character_message:
-          "Ben de İstanbul'da üniversite okuyorum. Sen ne okuyorsun?",
-        target_phrases: [
-          "Ben öğrenciyim",
-          "Ben yazılım okuyorum",
-          "Üniversitede okuyorum",
-        ],
-        hint: "You can say: Üniversitede okuyorum.",
-      },
-      {
-        id: 4,
-        character_message:
-          "Anladım! Peki, hobilerin neler?",
-        target_phrases: [
-          "Kitap okumayı seviyorum",
-          "Müzik dinlemeyi seviyorum",
-          "Film izlemeyi seviyorum",
-        ],
-        hint: "You can say: Müzik dinlemeyi seviyorum.",
-      },
-      {
-        id: 5,
-        character_message:
-          "Seninle tanıştığıma memnun oldum! Görüşürüz!",
-        target_phrases: [
-          "Görüşürüz",
-          "Hoşça kal",
-          "Güle güle",
-        ],
-        hint: "You can say: Görüşürüz!",
-      },
-    ],
-  },
-
-  vocabulary: [
-    {
-      turkish: "Merhaba",
-      english: "Hello",
-      arabic: "مرحباً",
-      pronunciation: "mehr-ha-bah",
-      example_sentence: "Merhaba, ben Ahmet.",
-      example_translation: "Hello, I'm Ahmet.",
-    },
-    {
-      turkish: "Ben",
-      english: "I am",
-      arabic: "أنا",
-      pronunciation: "ben",
-      example_sentence: "Ben Dilara.",
-      example_translation: "I am Dilara.",
-    },
-    {
-      turkish: "Adım",
-      english: "My name is",
-      arabic: "اسمي",
-      pronunciation: "ah-duhm",
-      example_sentence: "Adım Ali.",
-      example_translation: "My name is Ali.",
-    },
-    {
-      turkish: "Memnun oldum",
-      english: "Nice to meet you",
-      arabic: "تشرفت بلقائك",
-      pronunciation: "mem-noon ol-doom",
-      example_sentence: "Memnun oldum.",
-      example_translation: "Nice to meet you.",
-    },
-    {
-      turkish: "Hoşça kal",
-      english: "Goodbye",
-      arabic: "مع السلامة",
-      pronunciation: "hosh-cha kal",
-      example_sentence: "Hoşça kal!",
-      example_translation: "Goodbye!",
-    },
-  ],
-
-  grammar: [
-    {
-      title: "Introducing yourself",
-      explanation:
-        "Use 'Ben' or 'Adım' to introduce yourself.",
-      example: "Ben Ali. / Adım Ali.",
-      translation: "I am Ali. / My name is Ali.",
-    },
-  ],
-
-  exercises: [
-    {
-      type: "multiple_choice",
-      question:
-        "How do you say 'Hello' in Turkish?",
-      explanation:
-        "Merhaba is the most common greeting.",
-      options: [
-        {
-          text: "Merhaba",
-          is_correct: true,
-        },
-        {
-          text: "Hoşça kal",
-          is_correct: false,
-        },
-        {
-          text: "Teşekkür ederim",
-          is_correct: false,
-        },
-        {
-          text: "Lütfen",
-          is_correct: false,
-        },
-      ],
-    },
-
-    {
-      type: "translation",
-      question:
-        "Translate: My name is Ali.",
-      explanation:
-        "Use 'Adım' when introducing yourself.",
-      options: [
-        {
-          text: "Adım Ali.",
-          is_correct: true,
-        },
-        {
-          text: "Ben Ali.",
-          is_correct: true,
-        },
-      ],
-    },
-
-    {
-      type: "order_words",
-      question:
-        "Arrange the words to introduce yourself.",
-      explanation:
-        "Place the words in the correct order.",
-      options: [
-        {
-          text: "Ben",
-          is_correct: true,
-          order_index: 1,
-        },
-        {
-          text: "Ali",
-          is_correct: true,
-          order_index: 2,
-        },
-      ],
-    },
-  ],
-};
-
 export default function LessonScreen({
+  lessonId,
   onBack,
 }: LessonScreenProps) {
+  const [lesson, setLesson] = useState<Lesson | null>(null);
+
+  const [conversation, setConversation] =
+  useState<ConversationContent | null>(null);
+  
+  const [loading, setLoading] = useState(true);
+
+  const [error, setError] = useState<string | null>(null);
+
   const [section, setSection] = useState<
     "learn" | "exercises"
   >("learn");
 
-  const [currentExercise, setCurrentExercise] =
-    useState(0);
+  const [currentExercise, setCurrentExercise] = useState(0);
 
   const [answered, setAnswered] = useState(false);
+
   const [correct, setCorrect] = useState(false);
+
   const [completed, setCompleted] = useState(false);
 
   const progressAnimation = useState(
@@ -236,18 +51,74 @@ export default function LessonScreen({
     new Animated.Value(0)
   )[0];
 
+  // Load lesson from backend
+  useEffect(() => {
+    async function loadLesson() {
+      try {
+        setLoading(true);
+
+        const [lessonData, conversationData] = await Promise.all([
+          getLesson(lessonId),
+          getLessonConversation(lessonId),
+        ]);
+
+        setLesson(lessonData);
+        setConversation(conversationData);
+      } catch (err) {
+        console.error("Failed to load lesson:", err);
+        setError("Unable to load lesson.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadLesson();
+  }, [lessonId]);
+
+  // Don't access lesson until it has loaded
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.centerContent}>
+          <Text style={styles.loadingText}>
+            Loading lesson...
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (error || !lesson) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.centerContent}>
+          <Text style={styles.errorText}>
+            {error ?? "Lesson not found."}
+          </Text>
+
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={onBack}
+          >
+            <Text style={styles.backButtonText}>
+              Go Back
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   const exercise = lesson.exercises[currentExercise];
 
   const handleAnswer = (isCorrect: boolean) => {
     setCorrect(isCorrect);
     setAnswered(true);
 
-    const completedExercises =
-      currentExercise + 1;
+    const completedExercises = currentExercise + 1;
 
     const targetProgress =
-      (completedExercises /
-        lesson.exercises.length) *
+      (completedExercises / lesson.exercises.length) *
       100;
 
     Animated.timing(progressAnimation, {
@@ -460,50 +331,45 @@ export default function LessonScreen({
 
           {/* Conversation Preview */}
 
-          <Text style={styles.sectionTitle}>
-            Conversation
-          </Text>
-
-          <View
-            style={styles.conversationCard}
-          >
+          {conversation && (
+          <View style={styles.conversationCard}>
+            <Text style={styles.conversationTitle}>
+              Conversation
+            </Text>
+        
             <Text style={styles.conversationLabel}>
               CONTEXT
             </Text>
-
-            <Text
-              style={styles.conversationContext}
-            >
-              {lesson.conversation.context}
+        
+            <Text style={styles.conversationContext}>
+              {conversation.context}
             </Text>
-
+        
             <Text style={styles.conversationLabel}>
               GOAL
             </Text>
-
-            <Text
-              style={styles.conversationGoal}
-            >
-              {lesson.conversation.goal}
+        
+            <Text style={styles.conversationGoal}>
+              {conversation.goal}
             </Text>
-
+        
             <Text style={styles.conversationLabel}>
               YOU WILL PRACTICE
             </Text>
-
-            {lesson.conversation.success_criteria.map(
+        
+            {conversation.success_criteria.map(
               (item, index) => (
                 <Text
                   key={index}
-                  style={
-                    styles.successCriteria
-                  }
+                  style={styles.successCriteria}
                 >
                   • {item}
                 </Text>
               )
             )}
           </View>
+        )}
+
 
           {/* Start Exercises */}
 
@@ -697,7 +563,7 @@ const styles = StyleSheet.create({
   /* ========================== */
 
   learnContent: {
-    paddingBottom: 40,
+    paddingBottom: 10,
   },
 
   introduction: {
@@ -718,6 +584,33 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     marginTop: 4,
   },
+  centerContent: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+
+  loadingText: {
+    color: COLORS.navy,
+    fontSize: 18,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+
+  errorText: {
+    color: COLORS.navy,
+    fontSize: 18,
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+
+  backButtonText: {
+    color: COLORS.cream,
+    fontSize: 16,
+    fontWeight: "800",
+  },
 
   description: {
     color: COLORS.muted,
@@ -727,12 +620,12 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    color: COLORS.navy,
+    color: COLORS.cream,
     fontSize: 22,
     fontWeight: "900",
     marginHorizontal: 24,
-    marginTop: 30,
-    marginBottom: 12,
+    marginTop: 5,
+    marginBottom: 10,
   },
 
   /* ========================== */
@@ -823,40 +716,49 @@ const styles = StyleSheet.create({
   /* CONVERSATION PREVIEW */
   /* ========================== */
 
+  conversationTitle: {
+    color: COLORS.gold,
+    fontSize: 22,
+    fontWeight: "900",
+    marginBottom: 16,
+  },
+
   conversationCard: {
     marginHorizontal: 24,
+    marginTop: 24,
     padding: 20,
     borderRadius: 20,
     backgroundColor: COLORS.navy,
   },
-
+  
   conversationLabel: {
     color: COLORS.gold,
     fontSize: 11,
     fontWeight: "900",
     letterSpacing: 1,
-    marginBottom: 5,
+    marginBottom: 6,
     marginTop: 4,
   },
-
+  
   conversationContext: {
     color: COLORS.cream,
     fontSize: 15,
-    lineHeight: 21,
-    marginBottom: 14,
+    lineHeight: 22,
+    marginBottom: 16,
   },
-
+  
   conversationGoal: {
     color: COLORS.cream,
     fontSize: 15,
-    lineHeight: 21,
-    marginBottom: 14,
+    lineHeight: 22,
+    marginBottom: 16,
   },
-
+  
   successCriteria: {
     color: COLORS.cream,
     fontSize: 14,
     lineHeight: 21,
+    marginBottom: 2,
   },
 
   /* ========================== */
@@ -866,6 +768,7 @@ const styles = StyleSheet.create({
   startButton: {
     marginHorizontal: 24,
     marginTop: 28,
+    marginBottom: 15,
     minHeight: 62,
     borderRadius: 20,
     backgroundColor: COLORS.navy,

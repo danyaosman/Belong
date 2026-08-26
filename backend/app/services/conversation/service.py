@@ -1,3 +1,5 @@
+import json 
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
@@ -21,6 +23,28 @@ from app.services.conversation.script_loader import (
 from app.services.conversation.evaluator import (
     evaluate_response,
 )
+from app.services.lesson.service import get_lesson
+from app.schemas.conversation import (
+    ConversationResponse,
+    ConversationContentResponse,
+    ConversationStepResponse,
+)
+
+def get_lesson_conversation(
+    db: Session,
+    lesson_id: int,
+):
+    lesson = get_lesson(
+        db,
+        lesson_id,
+    )
+
+    return ConversationContentResponse(
+        context=lesson.conversation_context,
+        goal=lesson.conversation_goal,
+        success_criteria=lesson.success_criteria
+    )
+
 
 def start_conversation(
     db: Session,

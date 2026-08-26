@@ -40,18 +40,29 @@ export interface ConversationStep {
 }
 
 export interface Lesson {
+  id: number;
   title: string;
   description: string;
   level: number;
   lesson_number: number;
   character_id: number;
-  conversation: {
-    context: string;
-    goal: string;
-    success_criteria: string[];
-    steps: ConversationStep[];
-  };
+
   vocabulary: VocabularyItem[];
   grammar: GrammarItem[];
   exercises: Exercise[];
+}
+
+export interface ConversationStep {
+  id: number;
+  character_message: string;
+  expected_intent: string;
+  target_phrases: string[];
+  hint: string;
+  required: boolean;
+}
+
+export interface ConversationContent {
+  context: string;
+  goal: string;
+  success_criteria: string[];
 }

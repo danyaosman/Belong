@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String, Text
+from sqlalchemy import Integer, String, Text, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey
 
@@ -22,7 +22,10 @@ class Lesson(Base):
 
     conversation_goal: Mapped[str] = mapped_column(Text)
 
-    success_criteria: Mapped[str] = mapped_column(Text)
+    success_criteria: Mapped[str] = mapped_column(
+        JSON,
+        nullable=False
+    )
 
     thumbnail_url: Mapped[str | None] = mapped_column(String(255))
 

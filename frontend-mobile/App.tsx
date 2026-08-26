@@ -16,6 +16,7 @@ export default function App() {
   if (screen === "lesson") {
     return (
       <LessonScreen
+      lessonId={1}
         onBack={() => setScreen("home")}
       />
     );
@@ -42,7 +43,6 @@ export default function App() {
             <TouchableOpacity
               style={styles.lessonNode}
               onPress={() => {
-                console.log("LEESON PRESSED");
                 setScreen("lesson");}}
               activeOpacity={0.8}
             >
