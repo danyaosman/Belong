@@ -32,6 +32,7 @@ class ConversationResponse(BaseModel):
     status: ConversationStatus
     started_at: datetime
     ended_at: datetime | None = None
+    first_message: str
 
     class Config:
         from_attributes = True

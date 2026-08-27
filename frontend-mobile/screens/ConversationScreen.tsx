@@ -31,8 +31,12 @@ export default function ConversationScreen({
   const [currentMessage, setCurrentMessage] =
     useState("");
 
-  const [characterMessage, setCharacterMessage] =
-    useState<string | null>(null);
+  const [messages, setMessages] = useState<
+    {
+      sender: "character" | "user";
+      message: string;
+    }[]
+  >([]);
 
   const [feedback, setFeedback] =
     useState<string | null>(null);
@@ -67,6 +71,13 @@ export default function ConversationScreen({
         await startConversation(lessonId);
 
       setConversationId(conversation.id);
+
+      setMessages([
+        {
+          sender: "character",
+          message: conversation.first_message,
+        },
+      ]);
     } catch (err) {
       console.error(
         "Failed to start conversation:",
@@ -98,6 +109,8 @@ export default function ConversationScreen({
       return;
     }
 
+    const userMessage = currentMessage.trim();
+
     try {
       setSending(true);
       setError(null);
@@ -105,27 +118,40 @@ export default function ConversationScreen({
       const result =
         await sendConversationMessage(
           conversationId,
-          currentMessage.trim()
+          userMessage
         );
 
       setCorrect(result.correct);
       setFeedback(result.message);
       setHint(result.hint);
+      
+      if (result.correct) {
+        // add users message
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender:"user",
+            message: userMessage
+          },
+        ]);
+
+        // clear input
+        setCurrentMessage("");
+
+        //add characters next msg
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: "character",
+            message: result.message
+          },
+        ]);
+      }
 
       if (result.completed) {
         setCompleted(true);
       }
 
-      /*
-       * Only clear the input when the answer
-       * was correct.
-       *
-       * If incorrect, keep the text so the user
-       * can edit it and try again.
-       */
-      if (result.correct) {
-        setCurrentMessage("");
-      }
     } catch (err) {
       console.error(
         "Failed to send conversation message:",
@@ -211,27 +237,29 @@ export default function ConversationScreen({
           </Text>
         </View>
 
-        <Text style={styles.characterName}>
-          Dilara
-        </Text>
-
-        {characterMessage && (
-          <View style={styles.characterBubble}>
-            <Text style={styles.characterText}>
-              {characterMessage}
-            </Text>
-          </View>
-        )}
-
-        {!characterMessage && (
-          <View style={styles.characterBubble}>
-            <Text style={styles.characterText}>
-              Merhaba! Ben Dilara.
-            </Text>
-          </View>
-        )}
+        <View style={styles.messageList}>
+        {messages.map((item, index) => (
+          <View
+            key={index}
+            style={
+              item.sender === "user"
+                ? styles.userBubble
+                : styles.characterBubble
+            } 
+          >
+          <Text
+            style={
+              item.sender === "user"
+               ? styles.userText
+               : styles.characterText
+            }
+          >
+            {item.message}
+          </Text>
+        </View>
+       ))}
       </View>
-
+    </View>
       {/* Feedback */}
 
       {feedback && (
@@ -368,19 +396,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderBottomWidth: 1,
     borderBottomColor: "#E5E0D5",
+    marginTop: 30,
   },
 
   closeButton: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: COLORS.ivory,
     justifyContent: "center",
     alignItems: "center",
   },
 
   closeButtonText: {
-    fontSize: 32,
     color: COLORS.navy,
-    fontWeight: "300",
+    fontSize: 34,
+    lineHeight: 36,
   },
 
   headerTitle: {
@@ -395,9 +426,8 @@ const styles = StyleSheet.create({
 
   conversationArea: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
     paddingHorizontal: 24,
+    paddingTop: 20,
   },
 
   characterCircle: {
@@ -429,11 +459,32 @@ const styles = StyleSheet.create({
     maxWidth: "90%",
   },
 
+  messageList: {
+    width: "100%",
+    marginTop: 10,
+    flex: 1,
+  },
+
   characterText: {
     color: COLORS.cream,
-    fontSize: 17,
-    lineHeight: 24,
-    textAlign: "center",
+    fontSize: 16,
+    lineHeight: 22,
+  },
+
+  userBubble: {
+    alignSelf: "flex-end",
+    backgroundColor: COLORS.gold,
+    paddingHorizontal: 22,
+    paddingVertical: 16,
+    borderRadius: 18,
+    maxWidth: "80%",
+    marginBottom: 10,
+  },
+
+  userText: {
+    color: COLORS.navy,
+    fontSize: 16,
+    lineHeight: 22,
   },
 
   feedback: {

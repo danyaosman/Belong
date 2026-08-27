@@ -11,6 +11,7 @@ export interface Conversation {
   status: ConversationStatus;
   started_at: string;
   ended_at: string | null;
+  first_message: string;
 }
 
 export interface ConversationTurn {

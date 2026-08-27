@@ -69,6 +69,21 @@ def start_conversation(
             detail="This lesson does not have a character assigned.",
         )
 
+    script = load_lesson_script(
+        lesson.level,
+        lesson.lesson_number,
+    )
+
+    steps = script["conversation"]["steps"]
+
+    if not steps:
+        raise HTTPException(
+            status_code=400,
+            detail="This lesson has no conversation steps.",
+        )
+
+    first_step = steps[0]
+
     conversation = Conversation(
         user_id=user_id,
         lesson_id=lesson.id,
@@ -77,9 +92,20 @@ def start_conversation(
         status=ConversationStatus.ACTIVE,
     )
 
-    return conversation_repository.create(
+    conversation = conversation_repository.create(
         db,
         conversation,
+    )
+
+    return ConversationResponse(
+        id=conversation.id,
+        lesson_id=conversation.lesson_id,
+        character_id=conversation.character_id,
+        current_step=conversation.current_step,
+        status=conversation.status,
+        started_at=conversation.started_at,
+        ended_at=conversation.ended_at,
+        first_message=first_step["character_message"],
     )
 
 
