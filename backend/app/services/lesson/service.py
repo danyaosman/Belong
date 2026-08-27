@@ -29,7 +29,7 @@ def get_lesson(
     if lesson is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Lesson not found.",
+            detail=f"Lesson {lesson_id} not found.",
         )
 
     return lesson

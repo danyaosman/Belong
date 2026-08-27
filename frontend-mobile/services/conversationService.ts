@@ -1,18 +1,74 @@
-import { ConversationContent } from "../types/lesson";
+import {
+  Conversation,
+  ConversationTurn,
+} from "../types/conversation";
 
 const API_URL =
-  "https://spectrum-resize-nerd.ngrok-free.app";
+  "https://spectrum-resize-nerd.ngrok-free.dev";
 
-export async function getLessonConversation(
+export async function startConversation(
   lessonId: number
-): Promise<ConversationContent> {
+): Promise<Conversation> {
+
+   console.log(
+    "STARTING CONVERSATION FOR LESSON:",
+    lessonId
+  );
+
   const response = await fetch(
-    `${API_URL}/lessons/${lessonId}/conversation`
+    `${API_URL}/conversations/start`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        lesson_id: lessonId,
+      }),
+    }
+  );
+
+  console.log(
+    "START CONVERSATION STATUS:",
+    response.status
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+
+    console.log(
+      "START CONVERSATION ERROR:",
+      errorText
+    );
+
+    throw new Error(
+      `Failed to start conversation: ${response.status}`
+    );
+  }
+
+  return response.json();
+}
+
+export async function sendConversationMessage(
+  conversationId: number,
+  message: string
+): Promise<ConversationTurn> {
+  const response = await fetch(
+    `${API_URL}/conversations/${conversationId}/messages`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message,
+      }),
+    }
   );
 
   if (!response.ok) {
     throw new Error(
-      `Failed to load conversation: ${response.status}`
+      `Failed to send message: ${response.status}`
     );
   }
 

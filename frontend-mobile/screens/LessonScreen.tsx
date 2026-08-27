@@ -16,11 +16,13 @@ import { Lesson, ConversationContent } from "../types/lesson";
 interface LessonScreenProps {
   lessonId: number;
   onBack: () => void;
+  onStartConversation: () => void;
 }
 
 export default function LessonScreen({
   lessonId,
   onBack,
+  onStartConversation,
 }: LessonScreenProps) {
   const [lesson, setLesson] = useState<Lesson | null>(null);
 
@@ -367,6 +369,14 @@ export default function LessonScreen({
                 </Text>
               )
             )}
+            <TouchableOpacity
+              style={styles.startConversationButton}
+              onPress={onStartConversation}
+            >
+              <Text style={styles.startConversationText}>
+                START CONVERSATION
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -761,9 +771,25 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
 
-  /* ========================== */
-  /* START EXERCISES */
-  /* ========================== */
+  startConversationButton: {
+    marginTop: 20,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: COLORS.gold,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  
+  startConversationText: {
+    color: COLORS.navy,
+    fontSize: 14,
+    fontWeight: "900",
+    letterSpacing: 1,
+  },
+  
+    /* ========================== */
+    /* START EXERCISES */
+    /* ========================== */
 
   startButton: {
     marginHorizontal: 24,

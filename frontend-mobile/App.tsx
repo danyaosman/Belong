@@ -9,15 +9,29 @@ import {
 
 import { COLORS } from "./theme/colors";
 import LessonScreen from "./screens/LessonScreen";
+import ConversationScreen from "./screens/ConversationScreen";
 
 export default function App() {
-  const [screen, setScreen] = useState<"home" | "lesson">("home");
+  const [screen, setScreen] = useState<
+  "home" | "lesson" | "conversation"
+  >("home");
 
   if (screen === "lesson") {
     return (
       <LessonScreen
       lessonId={1}
         onBack={() => setScreen("home")}
+        onStartConversation={() =>
+          setScreen("conversation")
+        }
+      />
+    );
+  }
+  if (screen === "conversation") {
+    return (
+      <ConversationScreen
+      lessonId={1}
+        onBack={() => setScreen("lesson")}
       />
     );
   }
