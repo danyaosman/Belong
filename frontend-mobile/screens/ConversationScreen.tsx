@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -13,6 +14,7 @@ import {
 } from "react-native";
 
 import { COLORS } from "../theme/colors";
+
 import {
   sendConversationMessage,
   startConversation,
@@ -21,6 +23,11 @@ import {
 interface ConversationScreenProps {
   lessonId: number;
   onBack: () => void;
+}
+
+interface Message {
+  sender: "character" | "user";
+  message: string;
 }
 
 export default function ConversationScreen({
@@ -34,14 +41,10 @@ export default function ConversationScreen({
     useState("");
 
   const [characterAvatar, setCharacterAvatar] =
-  useState<string | null>(null);
+    useState<string | null>(null);
 
-  const [messages, setMessages] = useState<
-    {
-      sender: "character" | "user";
-      message: string;
-    }[]
-  >([]);
+  const [messages, setMessages] =
+    useState<Message[]>([]);
 
   const [feedback, setFeedback] =
     useState<string | null>(null);
@@ -65,8 +68,11 @@ export default function ConversationScreen({
     useState<string | null>(null);
 
   /*
-   * Start the conversation when the screen opens.
+   * ==========================================================
+   * START CONVERSATION
+   * ==========================================================
    */
+
   const initializeConversation = async () => {
     try {
       setLoading(true);
@@ -76,13 +82,13 @@ export default function ConversationScreen({
         await startConversation(lessonId);
 
       setConversationId(conversation.id);
-      
+
       setCharacterAvatar(
         conversation.character_avatar_url
           ? `https://spectrum-resize-nerd.ngrok-free.dev${conversation.character_avatar_url}`
           : null
       );
-      
+
       setMessages([
         {
           sender: "character",
@@ -103,12 +109,15 @@ export default function ConversationScreen({
     }
   };
 
-  /*
-   * Start conversation on first render.
-   */
   useEffect(() => {
     initializeConversation();
   }, []);
+
+  /*
+   * ==========================================================
+   * SEND MESSAGE
+   * ==========================================================
+   */
 
   const handleSend = async () => {
     if (
@@ -120,7 +129,8 @@ export default function ConversationScreen({
       return;
     }
 
-    const userMessage = currentMessage.trim();
+    const userMessage =
+      currentMessage.trim();
 
     try {
       setSending(true);
@@ -132,37 +142,35 @@ export default function ConversationScreen({
           userMessage
         );
 
-      setCorrect(result.correct);
-      setFeedback(result.message);
-      setHint(result.hint);
-      
       if (result.correct) {
-        // add users message
+        setFeedback(null);
+        setCorrect(true);
+        setHint(null);
+      } else {
+        setFeedback(result.message);
+        setCorrect(false);
+        setHint(result.hint);
+      }
+
+      if (result.correct) {
         setMessages((prev) => [
           ...prev,
           {
-            sender:"user",
-            message: userMessage
+            sender: "user",
+            message: userMessage,
           },
-        ]);
-
-        // clear input
-        setCurrentMessage("");
-
-        //add characters next msg
-        setMessages((prev) => [
-          ...prev,
           {
             sender: "character",
-            message: result.message
+            message: result.message,
           },
         ]);
+
+        setCurrentMessage("");
       }
 
       if (result.completed) {
         setCompleted(true);
       }
-
     } catch (err) {
       console.error(
         "Failed to send conversation message:",
@@ -177,9 +185,15 @@ export default function ConversationScreen({
     }
   };
 
+  /*
+   * ==========================================================
+   * LOADING
+   * ==========================================================
+   */
+
   if (loading) {
     return (
-      <View style={styles.centerContent}>
+      <View style={styles.loadingScreen}>
         <ActivityIndicator
           size="large"
           color={COLORS.gold}
@@ -192,337 +206,639 @@ export default function ConversationScreen({
     );
   }
 
-  if (error && conversationId === null) {
+  /*
+   * ==========================================================
+   * START ERROR
+   * ==========================================================
+   */
+
+  if (
+    error &&
+    conversationId === null
+  ) {
     return (
-      <View style={styles.centerContent}>
+      <View style={styles.errorScreen}>
+        <Text style={styles.errorTitle}>
+          Something went wrong
+        </Text>
+
         <Text style={styles.errorText}>
           {error}
         </Text>
 
         <TouchableOpacity
-          style={styles.backButton}
+          style={styles.errorButton}
           onPress={onBack}
+          activeOpacity={0.85}
         >
-          <Text style={styles.backButtonText}>
-            Go Back
+          <Text style={styles.errorButtonText}>
+            GO BACK
           </Text>
         </TouchableOpacity>
       </View>
     );
   }
 
+  /*
+   * ==========================================================
+   * MOST RECENT CHARACTER MESSAGE
+   * ==========================================================
+   */
+
+  const lastCharacterMessage =
+    [...messages]
+      .reverse()
+      .find(
+        (item) =>
+          item.sender === "character"
+      )?.message;
+
   return (
     <KeyboardAvoidingView
+  style={{ flex: 1 }}
+  behavior={Platform.OS === "ios" ? "padding" : undefined}
+  keyboardVerticalOffset={Platform.OS === "ios" ? -10 : 0}
+>
+    <View
       style={styles.container}
-      behavior={
-        Platform.OS === "ios"
-          ? "padding"
-          : undefined
-      }
     >
-      {/* Header */}
 
-      <View style={styles.header}>
+      {/* =====================================================
+          TOP BAR
+      ===================================================== */}
+
+      <View style={styles.topBar}>
         <TouchableOpacity
           onPress={onBack}
-          style={styles.closeButton}
+          style={styles.topButton}
+          activeOpacity={0.8}
         >
-          <Text style={styles.closeButtonText}>
-            ×
+          <Text style={styles.backIcon}>
+            ‹
           </Text>
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>
-          Conversation
-        </Text>
-
-        <View style={styles.headerSpacer} />
-      </View>
-
-      {/* Character + Conversation */}
-
-<View style={styles.conversationArea}>
-
-  {/* Character Call Area */}
-
-  <View style={styles.characterArea}>
-
-    {characterAvatar ? (
-      <Image
-        source={{ uri: characterAvatar }}
-        style={styles.characterImage}
-        resizeMode="contain"
-      />
-    ) : (
-      <View style={styles.characterPlaceholder}>
-        <Text style={styles.characterPlaceholderText}>
-          👤
-        </Text>
-      </View>
-    )}
-
-    {/* Call controls */}
-
-    <View style={styles.callControls}>
-
-      <TouchableOpacity style={styles.callButton}>
-        <Text style={styles.callButtonText}>
-          🎤
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.endCallButton}
-        onPress={onBack}
-      >
-        <Text style={styles.endCallButtonText}>
-          ✕
-        </Text>
-      </TouchableOpacity>
-
-    </View>
-
-  </View>
-
-  {/* Message history */}
-
-  <ScrollView
-    style={styles.messageList}
-    contentContainerStyle={styles.messageListContent}
-    showsVerticalScrollIndicator={false}
-  >
-    {messages.map((item, index) => (
-      <View
-        key={index}
-        style={
-          item.sender === "user"
-            ? styles.userMessageRow
-            : styles.characterMessageRow
-        }
-      >
-
-        <View
-          style={
-            item.sender === "user"
-              ? styles.userBubble
-              : styles.characterBubble
-          }
-        >
-          <Text
-            style={
-              item.sender === "user"
-                ? styles.userText
-                : styles.characterText
-            }
-            >
-              {item.message}
-            </Text>
+        <View style={styles.progressContainer}>
+          <View style={styles.progressTrack}>
+            <View
+              style={[
+                styles.progressFill,
+                {
+                  width: completed
+                    ? "100%"
+                    : "25%",
+                },
+              ]}
+            />
           </View>
         </View>
-        ))}
-      </ScrollView>
-    </View>
 
-      {/* Feedback */}
+      </View>
 
-      {feedback && (
+      {/* =====================================================
+          CHARACTER STAGE
+      ===================================================== */}
+
+      <View style={styles.characterStage}>
+        <View style={styles.characterGlow} />
+
+        {characterAvatar ? (
+          <Image
+            source={{
+              uri: characterAvatar,
+            }}
+            style={styles.characterImage}
+            resizeMode="contain"
+          />
+        ) : (
+          <View
+            style={styles.characterPlaceholder}
+          >
+            <Text
+              style={
+                styles.characterPlaceholderText
+              }
+            >
+              ?
+            </Text>
+          </View>
+        )}
+
+        {/* Current speech bubble */}
+
+        {lastCharacterMessage && (
+          <View
+            style={styles.speechBubble}
+          >
+            <Text
+              style={styles.speechText}
+              numberOfLines={4}
+            >
+              {lastCharacterMessage}
+            </Text>
+
+            <View
+              style={styles.speechTail}
+            />
+          </View>
+        )}
+
+        {/* Call controls */}
+
+        <View
+          style={styles.callControls}
+        >
+
+
+          <TouchableOpacity
+            style={styles.endCallButton}
+            onPress={onBack}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={styles.endCallIcon}
+            >
+              ✕
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* =====================================================
+          CONVERSATION HISTORY
+      ===================================================== */}
+
+      <View style={styles.chatArea}>
+        <ScrollView
+          style={styles.messageList}
+          contentContainerStyle={
+            styles.messageListContent
+          }
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+        >
+          {messages.map(
+            (item, index) => (
+              <View
+                key={`${index}-${item.message}`}
+                style={
+                  item.sender === "user"
+                    ? styles.userMessageRow
+                    : styles.characterMessageRow
+                }
+              >
+                <View
+                  style={
+                    item.sender === "user"
+                      ? styles.userBubble
+                      : styles.characterBubble
+                  }
+                >
+                  <Text
+                    style={
+                      item.sender === "user"
+                        ? styles.userText
+                        : styles.characterText
+                    }
+                  >
+                    {item.message}
+                  </Text>
+
+                  <View
+                    style={
+                      item.sender === "user"
+                        ? styles.userBubbleFooter
+                        : styles.characterBubbleFooter
+                    }
+                  >
+                    <Text
+                      style={
+                        item.sender === "user"
+                          ? styles.userTime
+                          : styles.characterTime
+                      }
+                    >
+                      {item.sender === "user"
+                        ? "You"
+                        : "Dilara"}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            )
+          )}
+
+          {sending && (
+            <View
+              style={styles.typingRow}
+            >
+              <View
+                style={styles.typingBubble}
+              >
+                <View style={styles.dot} />
+                <View style={styles.dot} />
+                <View style={styles.dot} />
+              </View>
+            </View>
+          )}
+
+          {error &&
+            conversationId !== null && (
+              <Text
+                style={styles.inlineError}
+              >
+                {error}
+              </Text>
+            )}
+        </ScrollView>
+      </View>
+
+      {/* =====================================================
+          FEEDBACK
+      ===================================================== */}
+
+      {feedback && !correct && (
         <View
           style={[
             styles.feedback,
-            correct
-              ? styles.correctFeedback
-              : styles.incorrectFeedback,
+            styles.incorrectFeedback,
           ]}
         >
-          <Text style={styles.feedbackTitle}>
-            {correct
-              ? "✓ Correct!"
-              : "✗ Almost!"}
-          </Text>
+          <View
+            style={styles.feedbackHeader}
+          >
+            <View
+              style={[
+                styles.feedbackIcon,
+                styles.incorrectIcon,
+              ]}
+            >
+              <Text
+                style={
+                  styles.feedbackIconText
+                }
+              >
+              !
+              </Text>
+            </View>
 
-          <Text style={styles.feedbackText}>
+            <Text
+              style={styles.feedbackTitle}
+            >
+              "Almost!"
+            </Text>
+          </View>
+
+          <Text
+            style={styles.feedbackText}
+          >
             {feedback}
           </Text>
 
-          {!correct && hint && (
-            <Text style={styles.hintText}>
-              Hint: {hint}
+          {hint && (
+            <Text
+              style={styles.hintText}
+            >
+              {hint}
             </Text>
           )}
         </View>
       )}
 
-      {/* Completed */}
+      {/* =====================================================
+          COMPLETED
+      ===================================================== */}
 
       {completed ? (
-        <View style={styles.completedArea}>
-          <Text style={styles.completedTitle}>
-            🎉 Conversation complete!
+        <View
+          style={styles.completedArea}
+        >
+          <Text
+            style={styles.completedTitle}
+          >
+            🎉 Great job!
           </Text>
 
-          <Text style={styles.completedText}>
-            Great job! You completed the
-            conversation.
+          <Text
+            style={styles.completedText}
+          >
+            You completed the conversation.
           </Text>
 
           <TouchableOpacity
             style={styles.continueButton}
             onPress={onBack}
+            activeOpacity={0.85}
           >
-            <Text style={styles.continueButtonText}>
-              Finish
+            <Text
+              style={
+                styles.continueButtonText
+              }
+            >
+              CONTINUE
             </Text>
           </TouchableOpacity>
         </View>
       ) : (
-        /* Input */
+        /* ===================================================
+           INPUT
+        =================================================== */
 
         <View style={styles.inputArea}>
+          <View
+            style={styles.inputContainer}
+          >
+            <TextInput
+              style={styles.input}
+              value={currentMessage}
+              onChangeText={
+                setCurrentMessage
+              }
+              placeholder="Type your response..."
+              placeholderTextColor={
+                COLORS.muted
+              }
+              multiline
+              editable={!sending}
+              returnKeyType="send"
+              onSubmitEditing={
+                handleSend
+              }
+            />
 
-      <TextInput
-        style={styles.input}
-        value={currentMessage}
-        onChangeText={setCurrentMessage}
-        placeholder="Type your response..."
-        placeholderTextColor="#999"
-        multiline
-        editable={!sending}
-      />
-
-      <TouchableOpacity
-        style={[
-          styles.micButton,
-          sending && styles.sendButtonDisabled,
-        ]}
-        onPress={handleSend}
-        disabled={
-          !currentMessage.trim() ||
-          sending
-        }
-      >
-        {sending ? (
-          <ActivityIndicator
-            color={COLORS.cream}
-          />
-        ) : (
-          <Text style={styles.micButtonText}>
-            🎤
-          </Text>
-        )}
-      </TouchableOpacity>
-
-      {error && (
-        <Text style={styles.errorText}>
-          {error}
-        </Text>
+            <TouchableOpacity
+              style={[
+                styles.micButton,
+                sending &&
+                  styles.micButtonDisabled,
+              ]}
+              onPress={handleSend}
+              disabled={
+                !currentMessage.trim() ||
+                sending
+              }
+              activeOpacity={0.8}
+            >
+              {sending ? (
+                <ActivityIndicator
+                  size="small"
+                  color={COLORS.navy}
+                />
+              ) : (
+                <Text
+                  style={styles.micIcon}
+                >
+                  🎤
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
       )}
-
     </View>
-      )}
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  /*
+   * ==========================================================
+   * MAIN
+   * ==========================================================
+   */
+
   container: {
     flex: 1,
-    backgroundColor: COLORS.cream,
+    backgroundColor: COLORS.navy,
   },
 
-  centerContent: {
+  loadingScreen: {
     flex: 1,
+    backgroundColor: COLORS.navy,
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
-    backgroundColor: COLORS.cream,
   },
 
   loadingText: {
-    marginTop: 14,
-    color: COLORS.navy,
+    marginTop: 16,
+    color: COLORS.cream,
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
+  },
+
+  errorScreen: {
+    flex: 1,
+    backgroundColor: COLORS.navy,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 32,
+  },
+
+  errorTitle: {
+    color: COLORS.cream,
+    fontSize: 24,
+    fontWeight: "900",
+    marginBottom: 10,
   },
 
   errorText: {
-    color: "#B42318",
-    fontSize: 14,
+    color: COLORS.creamSoft,
+    fontSize: 15,
     textAlign: "center",
-    marginTop: 10,
+    lineHeight: 22,
   },
 
-  header: {
-    height: 64,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E0D5",
-    marginTop: 30,
-  },
-
-  closeButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: COLORS.ivory,
+  errorButton: {
+    marginTop: 24,
+    paddingHorizontal: 28,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: COLORS.gold,
     justifyContent: "center",
     alignItems: "center",
   },
 
-  closeButtonText: {
+  errorButtonText: {
     color: COLORS.navy,
-    fontSize: 34,
-    lineHeight: 36,
-  },
-
-  headerTitle: {
-    fontSize: 20,
+    fontSize: 13,
     fontWeight: "900",
-    color: COLORS.navy,
+    letterSpacing: 1,
   },
 
-  headerSpacer: {
-    width: 40,
-  },
+  /*
+   * ==========================================================
+   * TOP BAR
+   * ==========================================================
+   */
 
-
-  conversationArea: {
-    flex: 1,
-    backgroundColor: COLORS.navy,
-  },
-
-  characterArea: {
-    height: 300,
-    backgroundColor: COLORS.navy,
+  topBar: {
+    height: 76,
+    paddingHorizontal: 18,
+    paddingTop: 20,
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-end",
-    position: "relative",
+    gap: 14,
+    backgroundColor: COLORS.navy,
+  },
+
+  topButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: COLORS.navyLight,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  backIcon: {
+    color: COLORS.cream,
+    fontSize: 40,
+    fontWeight: "300",
+    lineHeight: 40,
+  },
+
+  progressContainer: {
+    flex: 1,
+    justifyContent: "center",
+  },
+
+  progressTrack: {
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: COLORS.navySoft,
     overflow: "hidden",
+    marginHorizontal: 10,
+  },
+
+  progressFill: {
+    height: "100%",
+    borderRadius: 5,
+    backgroundColor: COLORS.gold,
+  },
+
+  ccButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: COLORS.navyLight,
+    borderWidth: 1,
+    borderColor: COLORS.navySoft,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  ccText: {
+    color: COLORS.goldLight,
+    fontSize: 13,
+    fontWeight: "900",
+    letterSpacing: 1,
+  },
+
+  /*
+   * ==========================================================
+   * CHARACTER
+   * ==========================================================
+   */
+
+characterStage: {
+  height: "38%",
+  minHeight: 220,
+  backgroundColor: COLORS.navy,
+  alignItems: "center",
+  justifyContent: "flex-end",
+  position: "relative",
+  overflow: "hidden",
+},
+
+  characterGlow: {
+    position: "absolute",
+    width: 330,
+    height: 330,
+    borderRadius: 165,
+    backgroundColor: COLORS.navyLight,
+    bottom: -100,
   },
 
   characterImage: {
-    width: "85%",
-    height: 270,
+    width: "78%",
+    height: 310,
+    marginBottom: 12,
   },
 
   characterPlaceholder: {
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: COLORS.ivory,
+    width: 230,
+    height: 230,
+    borderRadius: 115,
+    backgroundColor: COLORS.navyLight,
     justifyContent: "center",
     alignItems: "center",
+    marginBottom: 20,
   },
 
   characterPlaceholderText: {
-    fontSize: 80,
+    color: COLORS.goldLight,
+    fontSize: 70,
+    fontWeight: "800",
   },
+
+  /*
+   * ==========================================================
+   * SPEECH BUBBLE
+   * ==========================================================
+   */
+
+  speechBubble: {
+    position: "absolute",
+    bottom: 82,
+    maxWidth: "72%",
+    minWidth: 170,
+    backgroundColor: COLORS.creamLight,
+    paddingHorizontal: 20,
+    paddingVertical: 13,
+    borderRadius: 18,
+
+    shadowColor: COLORS.navy,
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+
+  speechText: {
+    color: COLORS.navy,
+    fontSize: 17,
+    lineHeight: 23,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+
+  speechTail: {
+    position: "absolute",
+    bottom: -9,
+    alignSelf: "center",
+    width: 0,
+    height: 0,
+    borderLeftWidth: 10,
+    borderRightWidth: 10,
+    borderTopWidth: 12,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    borderTopColor: COLORS.creamLight,
+  },
+
+  /*
+   * ==========================================================
+   * CALL CONTROLS
+   * ==========================================================
+   */
 
   callControls: {
     position: "absolute",
-    bottom: 12,
+    bottom: 15,
     left: 0,
     right: 0,
     flexDirection: "row",
@@ -531,37 +847,53 @@ const styles = StyleSheet.create({
     gap: 18,
   },
 
-  callButton: {
+  controlButton: {
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: COLORS.ivory,
+    backgroundColor: COLORS.navyLight,
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: COLORS.navySoft,
   },
 
-  callButtonText: {
-    fontSize: 22,
+  controlIcon: {
+    fontSize: 20,
   },
 
   endCallButton: {
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: "#D9534F",
+    backgroundColor: COLORS.error,
     justifyContent: "center",
     alignItems: "center",
   },
 
-  endCallButtonText: {
+  endCallIcon: {
     color: COLORS.cream,
-    fontSize: 24,
+    fontSize: 23,
     fontWeight: "800",
+  },
+
+  /*
+   * ==========================================================
+   * CHAT AREA
+   * ==========================================================
+   */
+
+  chatArea: {
+    flex: 1,
+    backgroundColor: COLORS.cream,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    overflow: "hidden",
   },
 
   messageList: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 14,
   },
 
   messageListContent: {
@@ -571,10 +903,10 @@ const styles = StyleSheet.create({
 
   characterMessageRow: {
     flexDirection: "row",
+    justifyContent: "flex-start",
     alignItems: "flex-end",
-    justifyContent:"flex-start",
     marginBottom: 14,
-    paddingRight: 20,
+    paddingRight: 24,
   },
 
   userMessageRow: {
@@ -585,30 +917,28 @@ const styles = StyleSheet.create({
     paddingLeft: 30,
   },
 
-  messageAvatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    marginRight: 8,
-  },
-
-  messageAvatarPlaceholder: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: COLORS.ivory,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 8,
-  },
+  /*
+   * Character messages
+   */
 
   characterBubble: {
-    backgroundColor: COLORS.ivory,
+    backgroundColor: COLORS.creamLight,
+    borderWidth: 1,
+    borderColor: COLORS.creamSoft,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 18,
     borderBottomLeftRadius: 4,
-    maxWidth: "85%",
+    maxWidth: "82%",
+
+    shadowColor: COLORS.navy,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
 
   characterText: {
@@ -617,6 +947,10 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 
+  /*
+   * User messages
+   */
+
   userBubble: {
     backgroundColor: COLORS.gold,
     paddingHorizontal: 16,
@@ -624,6 +958,15 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderBottomRightRadius: 4,
     maxWidth: "78%",
+
+    shadowColor: COLORS.navy,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
 
   userText: {
@@ -631,145 +974,242 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 22,
   },
+
+  /*
+   * Bubble labels
+   */
+
+  characterBubbleFooter: {
+    marginTop: 5,
+  },
+
+  userBubbleFooter: {
+    marginTop: 5,
+    alignItems: "flex-end",
+  },
+
+  characterTime: {
+    color: COLORS.muted,
+    fontSize: 10,
+    fontWeight: "600",
+  },
+
+  userTime: {
+    color: COLORS.navySoft,
+    fontSize: 10,
+    fontWeight: "700",
+  },
+
+  /*
+   * ==========================================================
+   * TYPING
+   * ==========================================================
+   */
+
+  typingRow: {
+    alignItems: "flex-start",
+    marginBottom: 12,
+  },
+
+  typingBubble: {
+    height: 38,
+    paddingHorizontal: 15,
+    borderRadius: 19,
+    backgroundColor: COLORS.creamSoft,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+
+  dot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: COLORS.navySoft,
+  },
+
+  inlineError: {
+    color: COLORS.error,
+    fontSize: 13,
+    textAlign: "center",
+    marginTop: 5,
+  },
+
+  /*
+   * ==========================================================
+   * FEEDBACK
+   * ==========================================================
+   */
+
   feedback: {
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
     borderTopWidth: 1,
   },
 
   correctFeedback: {
-    backgroundColor: "#89d294",
-    borderTopColor: "#52d265",
+    backgroundColor: COLORS.success,
+    borderTopColor: COLORS.success,
   },
 
   incorrectFeedback: {
-    backgroundColor: "#f17971",
-    borderTopColor: "#ed6357",
+    backgroundColor: COLORS.error,
+    borderTopColor: COLORS.error,
+  },
+
+  feedbackHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 5,
+  },
+
+  feedbackIcon: {
+    width: 25,
+    height: 25,
+    borderRadius: 13,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
+  },
+
+  correctIcon: {
+    backgroundColor: COLORS.goldLight,
+  },
+
+  incorrectIcon: {
+    backgroundColor: COLORS.goldLight,
+  },
+
+  feedbackIconText: {
+    color: COLORS.navy,
+    fontSize: 15,
+    fontWeight: "900",
   },
 
   feedbackTitle: {
-    fontSize: 16,
+    color: COLORS.cream,
+    fontSize: 15,
     fontWeight: "900",
-    color: COLORS.navy,
-    marginBottom: 4,
   },
 
   feedbackText: {
-    fontSize: 14,
-    color: COLORS.navy,
-    lineHeight: 20,
+    color: COLORS.creamLight,
+    fontSize: 13,
+    lineHeight: 19,
   },
 
   hintText: {
-    fontSize: 13,
-    color: COLORS.navy,
-    marginTop: 6,
-    fontStyle: "italic",
+    color: COLORS.creamSoft,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 4,
   },
 
+  /*
+   * ==========================================================
+   * INPUT
+   * ==========================================================
+   */
+
   inputArea: {
-    paddingHorizontal: 16,
+    backgroundColor: COLORS.navy,
+    paddingHorizontal: 15,
     paddingTop: 10,
     paddingBottom: 24,
-    backgroundColor: COLORS.navy,
-    flexDirection: "row",
-    alignItems: "flex-end",
     borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.1)",
+    borderTopColor: COLORS.navyLight,
+  },
+
+  inputContainer: {
+    minHeight: 54,
+    borderRadius: 27,
+    backgroundColor: COLORS.navyLight,
+    borderWidth: 1,
+    borderColor: COLORS.navySoft,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingLeft: 18,
+    paddingRight: 6,
   },
 
   input: {
     flex: 1,
-    minHeight: 52,
+    minHeight: 50,
     maxHeight: 100,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.15)",
-    borderRadius: 26,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    fontSize: 16,
     color: COLORS.cream,
-    marginRight: 10,
+    fontSize: 16,
+    lineHeight: 21,
+    paddingVertical: 12,
   },
 
   micButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: COLORS.gold,
     justifyContent: "center",
     alignItems: "center",
   },
 
-  micButtonText: {
-    fontSize: 22,
+  micButtonDisabled: {
+    opacity: 0.55,
   },
 
-  sendButton: {
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: COLORS.navy,
-    justifyContent: "center",
-    alignItems: "center",
+  micIcon: {
+    fontSize: 19,
   },
 
-  sendButtonDisabled: {
-    opacity: 0.5,
-  },
-
-  sendButtonText: {
-    color: COLORS.cream,
-    fontSize: 14,
-    fontWeight: "900",
-    letterSpacing: 1,
-  },
+  /*
+   * ==========================================================
+   * COMPLETED
+   * ==========================================================
+   */
 
   completedArea: {
-    padding: 24,
+    backgroundColor: COLORS.navy,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 25,
     alignItems: "center",
+    borderTopWidth: 1,
+    borderTopColor: COLORS.navyLight,
   },
 
   completedTitle: {
-    color: COLORS.navy,
-    fontSize: 20,
+    color: COLORS.cream,
+    fontSize: 21,
     fontWeight: "900",
-    textAlign: "center",
-    marginBottom: 8,
+    marginBottom: 4,
   },
 
   completedText: {
-    color: COLORS.navy,
-    fontSize: 15,
-    textAlign: "center",
-    marginBottom: 20,
+    color: COLORS.creamSoft,
+    fontSize: 14,
+    marginBottom: 14,
   },
 
   continueButton: {
     width: "100%",
-    height: 52,
+    height: 54,
     borderRadius: 16,
-    backgroundColor: COLORS.navy,
+    backgroundColor: COLORS.gold,
     justifyContent: "center",
     alignItems: "center",
+
+    shadowColor: COLORS.navy,
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 4,
   },
 
   continueButtonText: {
-    color: COLORS.cream,
+    color: COLORS.navy,
     fontSize: 15,
     fontWeight: "900",
-  },
-
-  backButton: {
-    marginTop: 20,
-    backgroundColor: COLORS.navy,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-
-  backButtonText: {
-    color: COLORS.cream,
-    fontWeight: "800",
+    letterSpacing: 1.5,
   },
 });
