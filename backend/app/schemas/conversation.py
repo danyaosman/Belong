@@ -28,6 +28,7 @@ class ConversationResponse(BaseModel):
     id: int
     lesson_id: int
     character_id: int
+    character_avatar_url: str | None = None
     current_step: int
     status: ConversationStatus
     started_at: datetime

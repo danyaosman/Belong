@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -30,6 +32,9 @@ export default function ConversationScreen({
 
   const [currentMessage, setCurrentMessage] =
     useState("");
+
+  const [characterAvatar, setCharacterAvatar] =
+  useState<string | null>(null);
 
   const [messages, setMessages] = useState<
     {
@@ -71,7 +76,13 @@ export default function ConversationScreen({
         await startConversation(lessonId);
 
       setConversationId(conversation.id);
-
+      
+      setCharacterAvatar(
+        conversation.character_avatar_url
+          ? `https://spectrum-resize-nerd.ngrok-free.dev${conversation.character_avatar_url}`
+          : null
+      );
+      
       setMessages([
         {
           sender: "character",
@@ -228,38 +239,90 @@ export default function ConversationScreen({
         <View style={styles.headerSpacer} />
       </View>
 
-      {/* Conversation */}
+      {/* Character + Conversation */}
 
-      <View style={styles.conversationArea}>
-        <View style={styles.characterCircle}>
-          <Text style={styles.characterEmoji}>
-            👩🏻
-          </Text>
-        </View>
+<View style={styles.conversationArea}>
 
-        <View style={styles.messageList}>
-        {messages.map((item, index) => (
-          <View
-            key={index}
-            style={
-              item.sender === "user"
-                ? styles.userBubble
-                : styles.characterBubble
-            } 
-          >
+  {/* Character Call Area */}
+
+  <View style={styles.characterArea}>
+
+    {characterAvatar ? (
+      <Image
+        source={{ uri: characterAvatar }}
+        style={styles.characterImage}
+        resizeMode="contain"
+      />
+    ) : (
+      <View style={styles.characterPlaceholder}>
+        <Text style={styles.characterPlaceholderText}>
+          👤
+        </Text>
+      </View>
+    )}
+
+    {/* Call controls */}
+
+    <View style={styles.callControls}>
+
+      <TouchableOpacity style={styles.callButton}>
+        <Text style={styles.callButtonText}>
+          🎤
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.endCallButton}
+        onPress={onBack}
+      >
+        <Text style={styles.endCallButtonText}>
+          ✕
+        </Text>
+      </TouchableOpacity>
+
+    </View>
+
+  </View>
+
+  {/* Message history */}
+
+  <ScrollView
+    style={styles.messageList}
+    contentContainerStyle={styles.messageListContent}
+    showsVerticalScrollIndicator={false}
+  >
+    {messages.map((item, index) => (
+      <View
+        key={index}
+        style={
+          item.sender === "user"
+            ? styles.userMessageRow
+            : styles.characterMessageRow
+        }
+      >
+
+        <View
+          style={
+            item.sender === "user"
+              ? styles.userBubble
+              : styles.characterBubble
+          }
+        >
           <Text
             style={
               item.sender === "user"
-               ? styles.userText
-               : styles.characterText
+                ? styles.userText
+                : styles.characterText
             }
-          >
-            {item.message}
-          </Text>
+            >
+              {item.message}
+            </Text>
+          </View>
         </View>
-       ))}
-      </View>
+        ))}
+      </ScrollView>
     </View>
+
       {/* Feedback */}
 
       {feedback && (
@@ -315,46 +378,46 @@ export default function ConversationScreen({
         /* Input */
 
         <View style={styles.inputArea}>
-          <TextInput
-            style={styles.input}
-            value={currentMessage}
-            onChangeText={setCurrentMessage}
-            placeholder="Type your response..."
-            placeholderTextColor="#999"
-            multiline
-            editable={!sending}
+
+      <TextInput
+        style={styles.input}
+        value={currentMessage}
+        onChangeText={setCurrentMessage}
+        placeholder="Type your response..."
+        placeholderTextColor="#999"
+        multiline
+        editable={!sending}
+      />
+
+      <TouchableOpacity
+        style={[
+          styles.micButton,
+          sending && styles.sendButtonDisabled,
+        ]}
+        onPress={handleSend}
+        disabled={
+          !currentMessage.trim() ||
+          sending
+        }
+      >
+        {sending ? (
+          <ActivityIndicator
+            color={COLORS.cream}
           />
+        ) : (
+          <Text style={styles.micButtonText}>
+            🎤
+          </Text>
+        )}
+      </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.sendButton,
-              (!currentMessage.trim() ||
-                sending) &&
-                styles.sendButtonDisabled,
-            ]}
-            onPress={handleSend}
-            disabled={
-              !currentMessage.trim() ||
-              sending
-            }
-          >
-            {sending ? (
-              <ActivityIndicator
-                color={COLORS.cream}
-              />
-            ) : (
-              <Text style={styles.sendButtonText}>
-                CHECK
-              </Text>
-            )}
-          </TouchableOpacity>
+      {error && (
+        <Text style={styles.errorText}>
+          {error}
+        </Text>
+      )}
 
-          {error && (
-            <Text style={styles.errorText}>
-              {error}
-            </Text>
-          )}
-        </View>
+    </View>
       )}
     </KeyboardAvoidingView>
   );
@@ -424,61 +487,143 @@ const styles = StyleSheet.create({
     width: 40,
   },
 
+
   conversationArea: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 20,
+    backgroundColor: COLORS.navy,
   },
 
-  characterCircle: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+  characterArea: {
+    height: 300,
     backgroundColor: COLORS.navy,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    position: "relative",
+    overflow: "hidden",
+  },
+
+  characterImage: {
+    width: "85%",
+    height: 270,
+  },
+
+  characterPlaceholder: {
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: COLORS.ivory,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 10,
   },
 
-  characterEmoji: {
-    fontSize: 45,
+  characterPlaceholderText: {
+    fontSize: 80,
   },
 
-  characterName: {
-    fontSize: 16,
+  callControls: {
+    position: "absolute",
+    bottom: 12,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 18,
+  },
+
+  callButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: COLORS.ivory,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  callButtonText: {
+    fontSize: 22,
+  },
+
+  endCallButton: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: "#D9534F",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  endCallButtonText: {
+    color: COLORS.cream,
+    fontSize: 24,
     fontWeight: "800",
-    color: COLORS.navy,
-    marginBottom: 18,
-  },
-
-  characterBubble: {
-    backgroundColor: COLORS.navy,
-    paddingHorizontal: 22,
-    paddingVertical: 16,
-    borderRadius: 20,
-    maxWidth: "90%",
   },
 
   messageList: {
-    width: "100%",
-    marginTop: 10,
     flex: 1,
+    paddingHorizontal: 20,
+  },
+
+  messageListContent: {
+    paddingTop: 18,
+    paddingBottom: 20,
+  },
+
+  characterMessageRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent:"flex-start",
+    marginBottom: 14,
+    paddingRight: 20,
+  },
+
+  userMessageRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "flex-end",
+    marginBottom: 14,
+    paddingLeft: 30,
+  },
+
+  messageAvatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    marginRight: 8,
+  },
+
+  messageAvatarPlaceholder: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: COLORS.ivory,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
+  },
+
+  characterBubble: {
+    backgroundColor: COLORS.ivory,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 18,
+    borderBottomLeftRadius: 4,
+    maxWidth: "85%",
   },
 
   characterText: {
-    color: COLORS.cream,
+    color: COLORS.navy,
     fontSize: 16,
     lineHeight: 22,
   },
 
   userBubble: {
-    alignSelf: "flex-end",
     backgroundColor: COLORS.gold,
-    paddingHorizontal: 22,
-    paddingVertical: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderRadius: 18,
-    maxWidth: "80%",
-    marginBottom: 10,
+    borderBottomRightRadius: 4,
+    maxWidth: "78%",
   },
 
   userText: {
@@ -486,7 +631,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 22,
   },
-
   feedback: {
     paddingHorizontal: 20,
     paddingVertical: 14,
@@ -494,13 +638,13 @@ const styles = StyleSheet.create({
   },
 
   correctFeedback: {
-    backgroundColor: "#E7F5E9",
-    borderTopColor: "#B7DDBD",
+    backgroundColor: "#89d294",
+    borderTopColor: "#52d265",
   },
 
   incorrectFeedback: {
-    backgroundColor: "#FFF0EF",
-    borderTopColor: "#E8B9B5",
+    backgroundColor: "#f17971",
+    borderTopColor: "#ed6357",
   },
 
   feedbackTitle: {
@@ -524,23 +668,42 @@ const styles = StyleSheet.create({
   },
 
   inputArea: {
-    padding: 20,
-    paddingBottom: 28,
-    backgroundColor: COLORS.cream,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 24,
+    backgroundColor: COLORS.navy,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.1)",
   },
 
   input: {
-    minHeight: 54,
-    maxHeight: 120,
+    flex: 1,
+    minHeight: 52,
+    maxHeight: 100,
     borderWidth: 1,
-    borderColor: "#D6D0C4",
-    borderRadius: 16,
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 16,
+    borderColor: "rgba(255,255,255,0.15)",
+    borderRadius: 26,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    paddingHorizontal: 18,
     paddingVertical: 14,
     fontSize: 16,
-    color: COLORS.navy,
-    marginBottom: 12,
+    color: COLORS.cream,
+    marginRight: 10,
+  },
+
+  micButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: COLORS.gold,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  micButtonText: {
+    fontSize: 22,
   },
 
   sendButton: {

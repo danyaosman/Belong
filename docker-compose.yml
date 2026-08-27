@@ -34,6 +34,7 @@ services:
 
     volumes:
       - ./backend:/app
+      - ./assets:/app/assets
 
     command: >
       uvicorn app.main:app

@@ -10,7 +10,9 @@ from app.db.session import engine
 
 from app.api.v1.router import api_router
 
+from fastapi.staticfiles import StaticFiles
 
+from pathlib import Path
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -21,6 +23,14 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
+)
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+app.mount(
+    "/assets",
+    StaticFiles(directory=BASE_DIR / "assets"),
+    name="assets",
 )
 
 app.include_router(api_router)

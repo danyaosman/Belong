@@ -101,6 +101,7 @@ def start_conversation(
         id=conversation.id,
         lesson_id=conversation.lesson_id,
         character_id=conversation.character_id,
+        character_avatar_url=conversation.character.avatar_url,
         current_step=conversation.current_step,
         status=conversation.status,
         started_at=conversation.started_at,

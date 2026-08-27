@@ -31,6 +31,7 @@ def seed_character(
         return
 
     character = Character(
+        id=data["id"],
         name=data["name"],
         age=data["age"],
         occupation=data["occupation"],

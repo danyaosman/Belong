@@ -1,6 +1,8 @@
 import {
   Conversation,
+  ConversationMessage,
   ConversationTurn,
+  
 } from "../types/conversation";
 
 const API_URL =
@@ -69,6 +71,22 @@ export async function sendConversationMessage(
   if (!response.ok) {
     throw new Error(
       `Failed to send message: ${response.status}`
+    );
+  }
+
+  return response.json();
+}
+
+export async function getConversationMessages(
+  conversationId: number
+): Promise<ConversationMessage[]> {
+  const response = await fetch(
+    `${API_URL}/conversations/${conversationId}/messages`
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to load messages: ${response.status}`
     );
   }
 
