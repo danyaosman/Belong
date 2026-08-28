@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
-  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -20,10 +19,13 @@ import {
   startConversation,
 } from "../services/conversationService";
 
-interface ConversationScreenProps {
-  lessonId: number;
-  onBack: () => void;
-}
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../navigation/AppNavigator";
+
+type Props = NativeStackScreenProps<
+  RootStackParamList,
+  "Conversation"
+>;
 
 interface Message {
   sender: "character" | "user";
@@ -31,9 +33,11 @@ interface Message {
 }
 
 export default function ConversationScreen({
-  lessonId,
-  onBack,
-}: ConversationScreenProps) {
+  route,
+  navigation,
+}: Props) {
+  const { lessonId } = route.params;
+
   const [conversationId, setConversationId] =
     useState<number | null>(null);
 
@@ -228,7 +232,7 @@ export default function ConversationScreen({
 
         <TouchableOpacity
           style={styles.errorButton}
-          onPress={onBack}
+          onPress={()=> navigation.goBack()}
           activeOpacity={0.85}
         >
           <Text style={styles.errorButtonText}>
@@ -269,7 +273,7 @@ export default function ConversationScreen({
 
       <View style={styles.topBar}>
         <TouchableOpacity
-          onPress={onBack}
+          onPress={()=> navigation.goBack()}
           style={styles.topButton}
           activeOpacity={0.8}
         >
@@ -350,7 +354,7 @@ export default function ConversationScreen({
         >
           <TouchableOpacity
             style={styles.endCallButton}
-            onPress={onBack}
+            onPress={()=> navigation.goBack()}
             activeOpacity={0.8}
           >
             <Text
@@ -526,7 +530,7 @@ export default function ConversationScreen({
 
           <TouchableOpacity
             style={styles.continueButton}
-            onPress={onBack}
+            onPress={()=> navigation.goBack()}
             activeOpacity={0.85}
           >
             <Text

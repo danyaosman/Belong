@@ -12,18 +12,19 @@ import ExerciseRenderer from "../components/exercises/ExerciseRenderer";
 import { getLesson, getLessonConversation } from "../services/lessonService";
 import { COLORS } from "../theme/colors";
 import { Lesson, ConversationContent } from "../types/lesson";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../navigation/AppNavigator";
 
-interface LessonScreenProps {
-  lessonId: number;
-  onBack: () => void;
-  onStartConversation: () => void;
-}
+type Props = NativeStackScreenProps<
+  RootStackParamList,
+  "Lesson"
+>;
 
 export default function LessonScreen({
-  lessonId,
-  onBack,
-  onStartConversation,
-}: LessonScreenProps) {
+  route,
+  navigation,
+}: Props) {
+  const { lessonId } = route.params;
   const [lesson, setLesson] = useState<Lesson | null>(null);
 
   const [conversation, setConversation] =
@@ -100,7 +101,7 @@ export default function LessonScreen({
 
           <TouchableOpacity
             style={styles.backButton}
-            onPress={onBack}
+            onPress={() => navigation.goBack()}
           >
             <Text style={styles.backButtonText}>
               Go Back
@@ -180,7 +181,7 @@ export default function LessonScreen({
 
           <TouchableOpacity
             style={styles.conversationButton}
-            onPress={onBack}
+            onPress={() => navigation.goBack()}
             activeOpacity={0.8}
           >
             <Text
@@ -207,7 +208,7 @@ export default function LessonScreen({
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={onBack}
+          onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
           <Text style={styles.backText}>‹</Text>
@@ -371,7 +372,11 @@ export default function LessonScreen({
             )}
             <TouchableOpacity
               style={styles.startConversationButton}
-              onPress={onStartConversation}
+              onPress={() =>
+                navigation.navigate("Conversation", {
+                  lessonId,
+                })
+              }
             >
               <Text style={styles.startConversationText}>
                 START CONVERSATION
