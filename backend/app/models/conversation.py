@@ -1,12 +1,11 @@
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import DateTime, ForeignKey
+from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-
 
 class ConversationStatus(str, Enum):
     ACTIVE = "active"
@@ -35,6 +34,11 @@ class Conversation(Base):
     character_id: Mapped[int] = mapped_column(
         ForeignKey("characters.id"),
         nullable=False,
+    )
+
+    gemini_interaction_id: Mapped[str | None] = mapped_column(
+        String,
+        nullable=True,
     )
 
     current_step: Mapped[int] = mapped_column(
@@ -74,3 +78,5 @@ class Conversation(Base):
         back_populates="conversation",
         cascade="all, delete-orphan",
     )
+
+    

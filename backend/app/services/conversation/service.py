@@ -3,6 +3,8 @@ import json
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from datetime import datetime
+
 from app.models.conversation import (
     Conversation,
     ConversationStatus,
@@ -20,15 +22,15 @@ from app.repositories.lesson_repository import LessonRepository
 from app.services.conversation.script_loader import (
     load_lesson_script,
 )
-from app.services.conversation.evaluator import (
-    evaluate_response,
-)
+
 from app.services.lesson.service import get_lesson
 from app.schemas.conversation import (
     ConversationResponse,
     ConversationContentResponse,
     ConversationStepResponse,
 )
+from app.services.ai.gemini import evaluate_conversation_response
+
 
 def get_lesson_conversation(
     db: Session,
@@ -170,6 +172,7 @@ def send_message(
         )
 
     lesson = conversation.lesson
+    character = conversation.character
 
     script = load_lesson_script(
         lesson.level,
@@ -193,6 +196,10 @@ def send_message(
             detail="Current conversation step not found.",
         )
 
+    # ---------------------------------------------------------
+    # Save user's message
+    # ---------------------------------------------------------
+
     user_message = ConversationMessage(
         conversation_id=conversation.id,
         sender=MessageSender.USER,
@@ -204,16 +211,63 @@ def send_message(
         user_message,
     )
 
-    evaluation = evaluate_response(
-        message,
-        current_step,
-    )
+    # ---------------------------------------------------------
+    # Ask Gemini to evaluate the response
+    # ---------------------------------------------------------
 
-    if not evaluation["correct"]:
+    try:
+        evaluation, interaction_id = (
+            evaluate_conversation_response(
+                character_name=character.name,
+                character_personality=character.personality,
+                character_occupation=character.occupation,
+                character_background=character.background,
+                lesson_title=lesson.title,
+                lesson_context=lesson.conversation_context,
+                lesson_goal=lesson.conversation_goal,
+                success_criteria=lesson.success_criteria,
+                current_step=current_step,
+                user_message=message.strip(),
+                previous_interaction_id=(
+                    conversation.gemini_interaction_id
+                ),
+                initial_character_message=steps[0][
+                    "character_message"
+                ],
+            )
+        )
+
+    except Exception as exc:
+        db.rollback()
+
+        print(
+            "Gemini conversation error:",
+            repr(exc),
+        )
+
+        raise HTTPException(
+            status_code=502,
+            detail="The AI conversation service is temporarily unavailable.",
+        )
+
+    # ---------------------------------------------------------
+    # Save Gemini interaction ID
+    # ---------------------------------------------------------
+
+    conversation.gemini_interaction_id = interaction_id
+
+    # ---------------------------------------------------------
+    # Incorrect response
+    # ---------------------------------------------------------
+
+    if not evaluation.correct:
+
+        character_text = evaluation.character_message
+
         character_message = ConversationMessage(
             conversation_id=conversation.id,
             sender=MessageSender.CHARACTER,
-            message=evaluation["feedback"],
+            message=character_text,
         )
 
         conversation_message_repository.create(
@@ -225,21 +279,33 @@ def send_message(
 
         return {
             "correct": False,
-            "message": character_message.message,
-            "hint": evaluation["hint"],
+            "message": character_text,
+            "hint": evaluation.hint,
             "current_step": conversation.current_step,
             "completed": False,
         }
 
+    # ---------------------------------------------------------
+    # Correct response
+    # ---------------------------------------------------------
+
     next_step_id = conversation.current_step + 1
 
+    # ---------------------------------------------------------
+    # Lesson completed
+    # ---------------------------------------------------------
+
     if next_step_id > len(steps):
+
         conversation.status = ConversationStatus.COMPLETED
+        conversation.ended_at = datetime.utcnow()
+
+        character_text = evaluation.character_message
 
         character_message = ConversationMessage(
             conversation_id=conversation.id,
             sender=MessageSender.CHARACTER,
-            message=current_step["character_message"],
+            message=character_text,
         )
 
         conversation_message_repository.create(
@@ -251,11 +317,15 @@ def send_message(
 
         return {
             "correct": True,
-            "message": character_message.message,
+            "message": character_text,
             "hint": None,
             "current_step": conversation.current_step,
             "completed": True,
         }
+
+    # ---------------------------------------------------------
+    # Advance to next step
+    # ---------------------------------------------------------
 
     conversation.current_step = next_step_id
 
@@ -265,10 +335,12 @@ def send_message(
         if step["id"] == next_step_id
     )
 
+    character_text = next_step["character_message"]
+
     character_message = ConversationMessage(
         conversation_id=conversation.id,
         sender=MessageSender.CHARACTER,
-        message=next_step["character_message"],
+        message=character_text,
     )
 
     conversation_message_repository.create(
@@ -280,7 +352,7 @@ def send_message(
 
     return {
         "correct": True,
-        "message": character_message.message,
+        "message": character_text,
         "hint": None,
         "current_step": conversation.current_step,
         "completed": False,

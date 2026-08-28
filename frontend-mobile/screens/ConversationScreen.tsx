@@ -348,8 +348,6 @@ export default function ConversationScreen({
         <View
           style={styles.callControls}
         >
-
-
           <TouchableOpacity
             style={styles.endCallButton}
             onPress={onBack}
