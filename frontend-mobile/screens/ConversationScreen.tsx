@@ -22,6 +22,17 @@ import {
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/AppNavigator";
 
+
+import {
+  getLesson,
+} from "../services/lessonService";
+
+import {
+  VocabularyItem,
+} from "../types/lesson";
+
+import InteractiveMessage from "../components/vocabulary/InteractiveMessage";
+
 type Props = NativeStackScreenProps<
   RootStackParamList,
   "Conversation"
@@ -71,6 +82,9 @@ export default function ConversationScreen({
   const [error, setError] =
     useState<string | null>(null);
 
+  const [vocabulary, setVocabulary] =
+    useState<VocabularyItem[]>([]);
+
   /*
    * ==========================================================
    * START CONVERSATION
@@ -82,35 +96,42 @@ export default function ConversationScreen({
       setLoading(true);
       setError(null);
 
-      const conversation =
-        await startConversation(lessonId);
+      const [conversation , lesson] =
+        await Promise.all([
+          startConversation(lessonId),
+          getLesson(lessonId),
+        ]);
 
-      setConversationId(conversation.id);
+        setConversationId(conversation.id);
+        
+        setVocabulary(
+          lesson.vocabulary ?? []
+        );
+        
+        setCharacterAvatar(
+          conversation.character_avatar_url
+            ? `https://spectrum-resize-nerd.ngrok-free.dev${conversation.character_avatar_url}`
+            : null
+        );
 
-      setCharacterAvatar(
-        conversation.character_avatar_url
-          ? `https://spectrum-resize-nerd.ngrok-free.dev${conversation.character_avatar_url}`
-          : null
-      );
+        setMessages([
+          {
+            sender: "character",
+            message: conversation.first_message,
+          },
+        ]);
+      } catch (err) {
+        console.error(
+          "Failed to start conversation:",
+          err
+        );
 
-      setMessages([
-        {
-          sender: "character",
-          message: conversation.first_message,
-        },
-      ]);
-    } catch (err) {
-      console.error(
-        "Failed to start conversation:",
-        err
-      );
-
-      setError(
-        "Unable to start the conversation."
-      );
-    } finally {
-      setLoading(false);
-    }
+        setError(
+          "Unable to start the conversation."
+        );
+      } finally {
+        setLoading(false);
+      }
   };
 
   useEffect(() => {
@@ -133,18 +154,28 @@ export default function ConversationScreen({
       return;
     }
 
-    const userMessage =
-      currentMessage.trim();
+    const userMessage = currentMessage.trim();
+
+    // Show the user's message immediately
+    setMessages((prev) => [
+      ...prev,
+      {
+        sender: "user",
+        message: userMessage,
+      },
+    ]);
+
+    // Clear the input immediately
+    setCurrentMessage("");
 
     try {
       setSending(true);
       setError(null);
 
-      const result =
-        await sendConversationMessage(
-          conversationId,
-          userMessage
-        );
+      const result = await sendConversationMessage(
+        conversationId,
+        userMessage
+      );
 
       if (result.correct) {
         setFeedback(null);
@@ -156,21 +187,14 @@ export default function ConversationScreen({
         setHint(result.hint);
       }
 
-      if (result.correct) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            sender: "user",
-            message: userMessage,
-          },
-          {
-            sender: "character",
-            message: result.message,
-          },
-        ]);
-
-        setCurrentMessage("");
-      }
+      // Only add the character response when it arrives
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "character",
+          message: result.message,
+        },
+      ]);
 
       if (result.completed) {
         setCompleted(true);
@@ -397,15 +421,16 @@ export default function ConversationScreen({
                       : styles.characterBubble
                   }
                 >
-                  <Text
-                    style={
+                  <InteractiveMessage
+                    message={item.message}
+                    vocabulary={vocabulary}
+                    textStyle={
                       item.sender === "user"
-                        ? styles.userText
-                        : styles.characterText
+                      ? styles.userText
+                      : styles.characterText
                     }
-                  >
-                    {item.message}
-                  </Text>
+                  />
+                    
 
                   <View
                     style={
@@ -491,12 +516,6 @@ export default function ConversationScreen({
               "Almost!"
             </Text>
           </View>
-
-          <Text
-            style={styles.feedbackText}
-          >
-            {feedback}
-          </Text>
 
           {hint && (
             <Text
@@ -1102,9 +1121,10 @@ characterStage: {
 
   hintText: {
     color: COLORS.creamSoft,
-    fontSize: 12,
+    fontSize: 14,
     lineHeight: 18,
     marginTop: 4,
+    fontWeight: "700",
   },
 
   /*
