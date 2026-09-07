@@ -4,7 +4,8 @@ from app.api.v1.endpoints import (
     auth,
     lessons,
     characters,
-    conversation
+    conversation,
+    tts
 )
 
 api_router = APIRouter()
@@ -13,3 +14,4 @@ api_router.include_router(auth.router)
 api_router.include_router(lessons.router)
 api_router.include_router(characters.router)
 api_router.include_router(conversation.router)
+api_router.include_router(tts.router)

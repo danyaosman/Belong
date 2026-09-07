@@ -22,3 +22,5 @@ google-genai
 google
 
 alembic
+
+requests

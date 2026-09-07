@@ -22,6 +22,8 @@ import {
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/AppNavigator";
 
+import { useAudioPlayer } from "expo-audio";
+import * as FileSystem from "expo-file-system/legacy";
 
 import {
   getLesson,
@@ -48,6 +50,8 @@ export default function ConversationScreen({
   navigation,
 }: Props) {
   const { lessonId } = route.params;
+
+  const player = useAudioPlayer(null);
 
   const [conversationId, setConversationId] =
     useState<number | null>(null);
@@ -85,6 +89,68 @@ export default function ConversationScreen({
   const [vocabulary, setVocabulary] =
     useState<VocabularyItem[]>([]);
 
+  const playCharacterVoice = async (text: string) => {
+    try {
+      const response = await fetch(
+        "https://spectrum-resize-nerd.ngrok-free.dev/tts",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `TTS request failed: ${response.status}`
+        );
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+
+      const bytes = new Uint8Array(arrayBuffer);
+
+      let binary = "";
+
+      const chunkSize = 8192;
+
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        const chunk = bytes.subarray(
+          i,
+          Math.min(i + chunkSize, bytes.length)
+        );
+
+        binary += String.fromCharCode(...chunk);
+      }
+
+      const base64 = btoa(binary);
+
+      const fileUri =
+        `${FileSystem.cacheDirectory}belong_tts_${Date.now()}.wav`;
+
+      await FileSystem.writeAsStringAsync(
+        fileUri,
+        base64,
+        {
+          encoding: FileSystem.EncodingType.Base64,
+        }
+      );
+
+      player.replace(fileUri);
+      player.play();
+
+      console.log("Playing TTS:", fileUri);
+    } catch (err) {
+      console.error(
+        "TTS playback error:",
+        err
+      );
+    }
+  };
   /*
    * ==========================================================
    * START CONVERSATION
@@ -120,6 +186,9 @@ export default function ConversationScreen({
             message: conversation.first_message,
           },
         ]);
+        await playCharacterVoice(
+          conversation.first_message
+        );
       } catch (err) {
         console.error(
           "Failed to start conversation:",
@@ -195,6 +264,8 @@ export default function ConversationScreen({
           message: result.message,
         },
       ]);
+
+      await playCharacterVoice(result.message);
 
       if (result.completed) {
         setCompleted(true);

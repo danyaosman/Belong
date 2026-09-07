@@ -70,6 +70,14 @@ Minor spelling or grammatical mistakes may still be considered
 acceptable when the intended answer is clear, unless the current
 lesson step specifically requires that grammatical form.
 
+IMPORTANT:
+Do not mark an answer correct merely because it contains one word
+from the expected answer. Evaluate the meaning of the learner's
+COMPLETE response.
+
+If the learner's response is unrelated, incomplete, or does not
+satisfy the current step, mark it incorrect.
+
 If the answer is correct:
 - correct must be true
 - feedback should be null
