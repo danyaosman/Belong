@@ -12,12 +12,22 @@ import {
   View,
 } from "react-native";
 
+import {
+  AudioModule,
+  RecordingPresets,
+  setAudioModeAsync,
+  useAudioRecorder,
+  useAudioRecorderState,
+} from "expo-audio";
+
 import { COLORS } from "../theme/colors";
 
 import {
   sendConversationMessage,
   startConversation,
 } from "../services/conversationService";
+
+import { transcribeAudio } from "../services/sttService";
 
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/AppNavigator";
@@ -88,6 +98,15 @@ export default function ConversationScreen({
 
   const [vocabulary, setVocabulary] =
     useState<VocabularyItem[]>([]);
+
+  const audioRecorder =
+  useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+
+  const recorderState =
+    useAudioRecorderState(audioRecorder);
+
+  const [recording, setRecording] =
+    useState(false);
 
   const playCharacterVoice = async (text: string) => {
     try {
@@ -207,6 +226,183 @@ export default function ConversationScreen({
     initializeConversation();
   }, []);
 
+    /*
+   * ==========================================================
+   * RECORD VOICE SST
+   * ==========================================================
+   */
+
+  useEffect(() => {
+    const setupRecording = async () => {
+      try {
+        const permission =
+          await AudioModule.requestRecordingPermissionsAsync();
+
+        if (!permission.granted) {
+          console.log(
+            "Microphone permission was denied."
+          );
+          return;
+        }
+
+        await setAudioModeAsync({
+          allowsRecording: true,
+          playsInSilentMode: true,
+        });
+
+        console.log(
+          "Microphone permission granted."
+        );
+      } catch (err) {
+        console.error(
+          "Failed to setup microphone:",
+          err
+        );
+      }
+    };
+
+    setupRecording();
+  }, []);
+
+
+  const handleMicrophonePress = async () => {
+    if (sending || completed) {
+      return;
+    }
+
+    try {
+      if (recording) {
+        console.log("Stopping recording...");
+
+        await audioRecorder.stop();
+
+        setRecording(false);
+
+        const uri = audioRecorder.uri;
+
+        if (!uri) {
+          throw new Error(
+            "Recording stopped but no audio file was created."
+          );
+        }
+
+        console.log(
+          "Recording saved:",
+          uri
+        );
+
+        setSending(true);
+        setError(null);
+
+        console.log(
+          "Sending recording to STT..."
+        );
+
+        const text =
+          await transcribeAudio(uri);
+
+        console.log(
+          "STT transcription:",
+          text
+        );
+
+        if (!text.trim()) {
+          throw new Error(
+            "STT returned an empty transcription."
+          );
+        }
+
+        // Put the transcription into the input state
+        setCurrentMessage(text);
+
+        console.log(
+          "Sending transcription as conversation message..."
+        );
+
+        // Send the transcription directly
+        // instead of waiting for the user to press Send.
+        const userMessage = text.trim();
+
+        if (conversationId === null) {
+          throw new Error(
+            "Conversation ID is missing."
+          );
+        }
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: "user",
+            message: userMessage,
+          },
+        ]);
+
+        setCurrentMessage("");
+
+        const result =
+          await sendConversationMessage(
+            conversationId,
+            userMessage
+          );
+
+        if (result.correct) {
+          setFeedback(null);
+          setCorrect(true);
+          setHint(null);
+        } else {
+          setFeedback(result.message);
+          setCorrect(false);
+          setHint(result.hint);
+        }
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: "character",
+            message: result.message,
+          },
+        ]);
+
+        await playCharacterVoice(
+          result.message
+        );
+
+        if (result.completed) {
+          setCompleted(true);
+        }
+      } else {
+        console.log(
+          "Starting recording..."
+        );
+
+        await audioRecorder.prepareToRecordAsync();
+
+        audioRecorder.record();
+
+        setRecording(true);
+        setError(null);
+
+        console.log(
+          "Recording started."
+        );
+      }
+    } catch (err) {
+      console.error(
+        "Recording/STT error:",
+        err
+      );
+
+      setRecording(false);
+      setSending(false);
+
+      setError(
+        "Unable to process your voice response."
+      );
+    } finally {
+      setSending(false);
+    }
+  };
+
   /*
    * ==========================================================
    * SEND MESSAGE
@@ -283,6 +479,7 @@ export default function ConversationScreen({
       setSending(false);
     }
   };
+
 
   /*
    * ==========================================================
@@ -662,13 +859,12 @@ export default function ConversationScreen({
             <TouchableOpacity
               style={[
                 styles.micButton,
-                sending &&
+              (sending || recording) &&
                   styles.micButtonDisabled,
               ]}
-              onPress={handleSend}
+              onPress={handleMicrophonePress}
               disabled={
-                !currentMessage.trim() ||
-                sending
+                sending && !recording
               }
               activeOpacity={0.8}
             >
@@ -681,7 +877,7 @@ export default function ConversationScreen({
                 <Text
                   style={styles.micIcon}
                 >
-                  🎤
+                  {recording ? "⏹️" : "🎤"}
                 </Text>
               )}
             </TouchableOpacity>
