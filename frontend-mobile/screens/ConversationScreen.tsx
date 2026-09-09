@@ -587,7 +587,7 @@ export default function ConversationScreen({
                 {
                   width: completed
                     ? "100%"
-                    : "25%",
+                    : "50%",
                 },
               ]}
             />
