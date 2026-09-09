@@ -100,13 +100,15 @@ export default function ConversationScreen({
     useState<VocabularyItem[]>([]);
 
   const audioRecorder =
-  useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+    useAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
   const recorderState =
     useAudioRecorderState(audioRecorder);
 
   const [recording, setRecording] =
     useState(false);
+    
+  const [transcribing, setTranscribing] = useState(false);
 
   const playCharacterVoice = async (text: string) => {
     try {
@@ -277,6 +279,7 @@ export default function ConversationScreen({
         await audioRecorder.stop();
 
         setRecording(false);
+        setTranscribing(true)
 
         const uri = audioRecorder.uri;
 
@@ -291,7 +294,6 @@ export default function ConversationScreen({
           uri
         );
 
-        setSending(true);
         setError(null);
 
         console.log(
@@ -300,6 +302,9 @@ export default function ConversationScreen({
 
         const text =
           await transcribeAudio(uri);
+
+        setTranscribing(false);
+        setSending(true);
 
         console.log(
           "STT transcription:",
@@ -311,7 +316,7 @@ export default function ConversationScreen({
             "STT returned an empty transcription."
           );
         }
-
+        
         // Put the transcription into the input state
         setCurrentMessage(text);
 
@@ -864,20 +869,22 @@ export default function ConversationScreen({
               ]}
               onPress={handleMicrophonePress}
               disabled={
-                sending && !recording
+                sending || transcribing 
               }
               activeOpacity={0.8}
             >
-              {sending ? (
+              {recording ? (
+                <Text style={styles.micIcon}>
+                  ⏹️
+                </Text>
+              ) : transcribing || sending ? (
                 <ActivityIndicator
                   size="small"
                   color={COLORS.navy}
                 />
               ) : (
-                <Text
-                  style={styles.micIcon}
-                >
-                  {recording ? "⏹️" : "🎤"}
+                <Text style={styles.micIcon}>
+                  🎤
                 </Text>
               )}
             </TouchableOpacity>
