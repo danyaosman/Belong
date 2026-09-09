@@ -7,7 +7,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -115,6 +114,17 @@ export default function ConversationScreen({
     
   const [transcribing, setTranscribing] = useState(false);
 
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+
+  const handleLeavePress = () => {
+    setShowLeaveModal(true);
+  };
+
+  const handleConfirmLeave = () => {
+    setShowLeaveModal(false);
+    navigation.navigate("Home");
+  };
+
   const playCharacterVoice = async (text: string) => {
     try {
       const response = await fetch(
@@ -176,7 +186,10 @@ export default function ConversationScreen({
         err
       );
     }
+
   };
+
+
   /*
    * ==========================================================
    * START CONVERSATION
@@ -408,6 +421,7 @@ export default function ConversationScreen({
 
       setRecording(false);
       setSending(false);
+      setTranscribing(false);
 
       setError(
         "Unable to process your voice response."
@@ -493,6 +507,8 @@ export default function ConversationScreen({
       );
     } finally {
       setSending(false);
+      setTranscribing(false);
+      setRecording(false);
     }
   };
 
@@ -579,35 +595,43 @@ export default function ConversationScreen({
       style={styles.container}
     >
 
-      {/* =====================================================
-          TOP BAR
-      ===================================================== */}
+    {/* ========================== */}
+    {/* HEADER */}
+    {/* ========================== */}
 
-      <View style={styles.topBar}>
-        <TouchableOpacity
-          onPress={()=> navigation.goBack()}
-          style={styles.topButton}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.backIcon}>
-            ‹
-          </Text>
-        </TouchableOpacity>
+    <View style={styles.header}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={handleLeavePress}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.backText}>✕</Text>
+      </TouchableOpacity>
 
-        <View style={styles.progressContainer}>
-          <View style={styles.progressTrack}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  width: `${conversationProgress}%`
-                },
-              ]}
-            />
-          </View>
-        </View>
+      <Text style={styles.headerTitle}>
+        Conversation
+      </Text>
 
+      <View style={styles.headerSpacer} />
+    </View>
+
+
+    {/* ========================== */}
+    {/* CONVERSATION PROGRESS */}
+    {/* ========================== */}
+
+    <View style={styles.progressContainer}>
+      <View style={styles.progressTrack}>
+        <View
+          style={[
+            styles.progressFill,
+            {
+              width: `${conversationProgress}%`,
+            },
+          ]}
+        />
       </View>
+    </View>
 
       {/* =====================================================
           CHARACTER STAGE
@@ -657,23 +681,7 @@ export default function ConversationScreen({
           </View>
         )}
 
-        {/* Call controls */}
-
-        <View
-          style={styles.callControls}
-        >
-          <TouchableOpacity
-            style={styles.endCallButton}
-            onPress={()=> navigation.goBack()}
-            activeOpacity={0.8}
-          >
-            <Text
-              style={styles.endCallIcon}
-            >
-              ✕
-            </Text>
-          </TouchableOpacity>
-        </View>
+  
       </View>
 
       {/* =====================================================
@@ -852,55 +860,67 @@ export default function ConversationScreen({
            INPUT
         =================================================== */
 
-        <View style={styles.inputArea}>
-          <View
-            style={styles.inputContainer}
-          >
-            <TextInput
-              style={styles.input}
-              value={currentMessage}
-              onChangeText={
-                setCurrentMessage
-              }
-              placeholder="Type your response..."
-              placeholderTextColor={
-                COLORS.muted
-              }
-              multiline
-              editable={!sending}
-              returnKeyType="send"
-              onSubmitEditing={
-                handleSend
-              }
-            />
-
-            <TouchableOpacity
+        <View style={styles.voiceInputArea}>
+          <TouchableOpacity
               style={[
                 styles.micButton,
-              (sending || recording) &&
+                (sending || transcribing || recording) &&
                   styles.micButtonDisabled,
               ]}
               onPress={handleMicrophonePress}
-              disabled={
-                sending || transcribing 
-              }
+              disabled={sending || transcribing}
               activeOpacity={0.8}
             >
               {recording ? (
-                <Text style={styles.micIcon}>
-                  ⏹️
-                </Text>
+                <Text style={styles.micIcon}>⏹️</Text>
               ) : transcribing || sending ? (
                 <ActivityIndicator
-                  size="small"
+                  size="large"
                   color={COLORS.navy}
                 />
               ) : (
-                <Text style={styles.micIcon}>
-                  🎤
-                </Text>
+                <Text style={styles.micIcon}>🎤</Text>
               )}
             </TouchableOpacity>
+        </View>
+      )}
+
+      {/* =====================================================
+          LEAVE CONVO MODAL
+      ===================================================== */}
+
+      {showLeaveModal && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.leaveModal}>
+            <Text style={styles.leaveModalTitle}>
+              Leave this lesson?
+            </Text>
+
+            <Text style={styles.leaveModalText}>
+              Your conversation progress will be lost.
+            </Text>
+
+            <View style={styles.leaveModalButtons}>
+              <TouchableOpacity
+                style={styles.stayButton}
+                onPress={() => setShowLeaveModal(false)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.stayButtonText}>
+                  Stay
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.leaveButton}
+                onPress={handleConfirmLeave}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.leaveButtonText}>
+                  Leave
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       )}
@@ -976,47 +996,60 @@ const styles = StyleSheet.create({
 
   /*
    * ==========================================================
-   * TOP BAR
+   * HEADER
    * ==========================================================
    */
 
-  topBar: {
-    height: 76,
-    paddingHorizontal: 18,
-    paddingTop: 20,
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 8,
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    backgroundColor: COLORS.navy,
+    marginTop: 30,
+    minHeight: 64,
+    position: "relative",
   },
 
-  topButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  headerTitle: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    textAlign: "center",
+    color: COLORS.cream,
+    fontSize: 16,
+    fontWeight: "800",
+  },
+
+  backButton: {
+    width: 35,
+    height: 35,
+    borderRadius: 21,
     backgroundColor: COLORS.navyLight,
     justifyContent: "center",
     alignItems: "center",
   },
 
-  backIcon: {
-    color: COLORS.cream,
-    fontSize: 40,
-    fontWeight: "300",
-    lineHeight: 40,
+  backText: {
+    color: COLORS.creamSoft,
+    fontSize: 18,
+    lineHeight: 26,
+  },
+
+  headerSpacer: {
+    width: 42,
   },
 
   progressContainer: {
-    flex: 1,
-    justifyContent: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 10,
   },
 
   progressTrack: {
     height: 9,
-    borderRadius: 5,
     backgroundColor: COLORS.navySoft,
+    borderRadius: 5,
     overflow: "hidden",
-    marginHorizontal: 10,
   },
 
   progressFill: {
@@ -1025,39 +1058,21 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.gold,
   },
 
-  ccButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: COLORS.navyLight,
-    borderWidth: 1,
-    borderColor: COLORS.navySoft,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  ccText: {
-    color: COLORS.goldLight,
-    fontSize: 13,
-    fontWeight: "900",
-    letterSpacing: 1,
-  },
-
   /*
    * ==========================================================
    * CHARACTER
    * ==========================================================
    */
 
-characterStage: {
-  height: "38%",
-  minHeight: 220,
-  backgroundColor: COLORS.navy,
-  alignItems: "center",
-  justifyContent: "flex-end",
-  position: "relative",
-  overflow: "hidden",
-},
+  characterStage: {
+    height: "48%",
+    minHeight: 220,
+    backgroundColor: COLORS.navy,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    position: "relative",
+    overflow: "hidden",
+  },
 
   characterGlow: {
     position: "absolute",
@@ -1070,7 +1085,7 @@ characterStage: {
 
   characterImage: {
     width: "78%",
-    height: 310,
+    height: 400,
     marginBottom: 12,
   },
 
@@ -1144,16 +1159,6 @@ characterStage: {
    * ==========================================================
    */
 
-  callControls: {
-    position: "absolute",
-    bottom: 15,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 18,
-  },
 
   controlButton: {
     width: 52,
@@ -1420,41 +1425,18 @@ characterStage: {
    * ==========================================================
    */
 
-  inputArea: {
-    backgroundColor: COLORS.navy,
-    paddingHorizontal: 15,
-    paddingTop: 10,
-    paddingBottom: 24,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.navyLight,
-  },
-
-  inputContainer: {
-    minHeight: 54,
-    borderRadius: 27,
-    backgroundColor: COLORS.navyLight,
-    borderWidth: 1,
-    borderColor: COLORS.navySoft,
-    flexDirection: "row",
+  voiceInputArea: {
+    backgroundColor: COLORS.cream,
     alignItems: "center",
-    paddingLeft: 18,
-    paddingRight: 6,
-  },
-
-  input: {
-    flex: 1,
-    minHeight: 50,
-    maxHeight: 100,
-    color: COLORS.cream,
-    fontSize: 16,
-    lineHeight: 21,
-    paddingVertical: 12,
+    justifyContent: "center",
+    paddingTop: 16,
+    paddingBottom: 28,
   },
 
   micButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: COLORS.gold,
     justifyContent: "center",
     alignItems: "center",
@@ -1465,7 +1447,7 @@ characterStage: {
   },
 
   micIcon: {
-    fontSize: 19,
+    fontSize: 38,
   },
 
   /*
@@ -1520,5 +1502,79 @@ characterStage: {
     fontSize: 15,
     fontWeight: "900",
     letterSpacing: 1.5,
+  },
+
+  modalOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 28,
+  },
+
+  leaveModal: {
+    width: "100%",
+    backgroundColor: COLORS.ivory,
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 28,
+    alignItems: "center",
+  },
+
+  leaveModalTitle: {
+    color: COLORS.navy,
+    fontSize: 22,
+    fontWeight: "800",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+
+  leaveModalText: {
+    color: COLORS.muted,
+    fontSize: 15,
+    lineHeight: 21,
+    textAlign: "center",
+    marginBottom: 26,
+  },
+
+  leaveModalButtons: {
+    width: "100%",
+    flexDirection: "row",
+    gap: 12,
+  },
+
+  stayButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: COLORS.gold,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  stayButtonText: {
+    color: COLORS.navy,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+
+  leaveButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: COLORS.gold,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  leaveButtonText: {
+    color: COLORS.navy,
+    fontSize: 15,
+    fontWeight: "800",
   },
 });

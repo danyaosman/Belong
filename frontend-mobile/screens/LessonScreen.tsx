@@ -204,6 +204,7 @@ export default function LessonScreen({
 
   return (
     <View style={styles.container}>
+      
       {/* ========================== */}
       {/* HEADER */}
       {/* ========================== */}
@@ -644,12 +645,12 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    color: COLORS.cream,
+    color: COLORS.brown,
     fontSize: 22,
     fontWeight: "900",
     marginHorizontal: 24,
-    marginTop: 5,
-    marginBottom: 10,
+    marginTop: 10,
+    marginBottom: 12,
   },
 
   /* ========================== */
