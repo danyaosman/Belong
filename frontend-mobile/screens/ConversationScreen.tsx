@@ -70,6 +70,9 @@ export default function ConversationScreen({
   const [currentStep, setCurrentStep] = 
     useState(1);
 
+  const [correctResponses, setCorrectResponses] = useState(0);
+  const [hintsUsed, setHintsUsed] = useState(0);
+
   const [currentMessage, setCurrentMessage] =
     useState("");
 
@@ -373,14 +376,21 @@ export default function ConversationScreen({
         setCurrentStep(result.current_step);
 
         if (result.correct) {
+          setCorrectResponses((prev) => prev + 1);
+
           setFeedback(null);
           setCorrect(true);
           setHint(null);
         } else {
+          if(result.hint) {
+            setHintsUsed((prev) => prev + 1)
+          }
           setFeedback(result.message);
           setCorrect(false);
           setHint(result.hint);
         }
+        console.log("Correct:", correctResponses);
+        console.log("Hints:", hintsUsed); 
 
         setMessages((prev) => [
           ...prev,
@@ -473,14 +483,21 @@ export default function ConversationScreen({
       setCurrentStep(result.current_step);
 
       if (result.correct) {
+        setCorrectResponses((prev) => prev + 1);
+
         setFeedback(null);
         setCorrect(true);
         setHint(null);
       } else {
+        if(result.hint) {
+          setHintsUsed((prev) => prev + 1)
+        }
         setFeedback(result.message);
         setCorrect(false);
         setHint(result.hint);
       }
+      console.log("Correct:", correctResponses);
+      console.log("Hints:", hintsUsed);
 
       // Only add the character response when it arrives
       setMessages((prev) => [
@@ -773,53 +790,52 @@ export default function ConversationScreen({
               </Text>
             )}
         </ScrollView>
-      </View>
-
-      {/* =====================================================
+         {/* =====================================================
           FEEDBACK
       ===================================================== */}
 
-      {feedback && !correct && (
-        <View
-          style={[
-            styles.feedback,
-            styles.incorrectFeedback,
-          ]}
-        >
+        {feedback && !correct && (
           <View
-            style={styles.feedbackHeader}
+            style={[
+              styles.feedback,
+            ]}
           >
             <View
-              style={[
-                styles.feedbackIcon,
-                styles.incorrectIcon,
-              ]}
+              style={styles.feedbackHeader}
             >
-              <Text
-                style={
-                  styles.feedbackIconText
-                }
+              <View
+                style={[
+                  styles.feedbackIcon,
+                  styles.incorrectIcon,
+                ]}
               >
-              !
+                <Text
+                  style={
+                    styles.feedbackIconText
+                  }
+                >
+                !
+                </Text>
+              </View>
+
+              <Text
+                style={styles.feedbackTitle}
+              >
+                Almost...
               </Text>
             </View>
 
-            <Text
-              style={styles.feedbackTitle}
-            >
-              "Almost!"
-            </Text>
+            {hint && (
+              <Text
+                style={styles.hintText}
+              >
+                {hint}
+              </Text>
+            )}
           </View>
+        )}
+      </View>
 
-          {hint && (
-            <Text
-              style={styles.hintText}
-            >
-              {hint}
-            </Text>
-          )}
-        </View>
-      )}
 
       {/* =====================================================
           COMPLETED
@@ -1065,7 +1081,7 @@ const styles = StyleSheet.create({
    */
 
   characterStage: {
-    height: "48%",
+    height: "45%",
     minHeight: 220,
     backgroundColor: COLORS.navy,
     alignItems: "center",
@@ -1085,7 +1101,7 @@ const styles = StyleSheet.create({
 
   characterImage: {
     width: "78%",
-    height: 400,
+    height: 360,
     marginBottom: 12,
   },
 
@@ -1202,6 +1218,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     overflow: "hidden",
+    position: "relative",
   },
 
   messageList: {
@@ -1355,19 +1372,19 @@ const styles = StyleSheet.create({
    */
 
   feedback: {
+    position: "absolute",
+    left: 30,
+    right: 30,
+    bottom: 18,
     paddingHorizontal: 18,
     paddingVertical: 12,
+    marginHorizontal: 13,
     borderTopWidth: 1,
-  },
-
-  correctFeedback: {
-    backgroundColor: COLORS.success,
-    borderTopColor: COLORS.success,
-  },
-
-  incorrectFeedback: {
+    borderRadius: 30,
     backgroundColor: COLORS.error,
     borderTopColor: COLORS.error,
+    zIndex: 10,
+    elevation: 10,
   },
 
   feedbackHeader: {
@@ -1377,8 +1394,8 @@ const styles = StyleSheet.create({
   },
 
   feedbackIcon: {
-    width: 25,
-    height: 25,
+    width: 23,
+    height: 23,
     borderRadius: 13,
     justifyContent: "center",
     alignItems: "center",
@@ -1415,6 +1432,7 @@ const styles = StyleSheet.create({
     color: COLORS.creamSoft,
     fontSize: 14,
     lineHeight: 18,
+    paddingBottom:5,
     marginTop: 4,
     fontWeight: "700",
   },
