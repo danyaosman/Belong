@@ -66,6 +66,11 @@ export default function ConversationScreen({
   const [conversationId, setConversationId] =
     useState<number | null>(null);
 
+  const [totalSteps, setTotalSteps] =
+    useState(1);
+  const [currentStep, setCurrentStep] = 
+    useState(1);
+
   const [currentMessage, setCurrentMessage] =
     useState("");
 
@@ -190,7 +195,9 @@ export default function ConversationScreen({
         ]);
 
         setConversationId(conversation.id);
-        
+        setCurrentStep(conversation.current_step);
+        setTotalSteps(conversation.total_steps);
+
         setVocabulary(
           lesson.vocabulary ?? []
         );
@@ -349,6 +356,8 @@ export default function ConversationScreen({
             conversationId,
             userMessage
           );
+        
+        setCurrentStep(result.current_step);
 
         if (result.correct) {
           setFeedback(null);
@@ -447,6 +456,8 @@ export default function ConversationScreen({
         userMessage
       );
 
+      setCurrentStep(result.current_step);
+
       if (result.correct) {
         setFeedback(null);
         setCorrect(true);
@@ -484,6 +495,10 @@ export default function ConversationScreen({
       setSending(false);
     }
   };
+
+  const conversationProgress = completed
+    ? 100
+    : 50 + (50 * (currentStep - 1)) / totalSteps;
 
 
   /*
@@ -585,9 +600,7 @@ export default function ConversationScreen({
               style={[
                 styles.progressFill,
                 {
-                  width: completed
-                    ? "100%"
-                    : "50%",
+                  width: `${conversationProgress}%`
                 },
               ]}
             />
