@@ -122,7 +122,7 @@ export default function LessonScreen({
 
     const targetProgress =
       (completedExercises / lesson.exercises.length) *
-      100;
+      50;
 
     Animated.timing(progressAnimation, {
       toValue: targetProgress,
@@ -145,7 +145,10 @@ export default function LessonScreen({
       currentExercise ===
       lesson.exercises.length - 1
     ) {
-      setCompleted(true);
+      navigation.navigate("Conversation", {
+        lessonId,
+      });
+
       return;
     }
 
@@ -201,6 +204,7 @@ export default function LessonScreen({
 
   return (
     <View style={styles.container}>
+      
       {/* ========================== */}
       {/* HEADER */}
       {/* ========================== */}
@@ -219,8 +223,23 @@ export default function LessonScreen({
             ? `Lesson ${lesson.lesson_number}`
             : "Practice"}
         </Text>
-
-        <View style={styles.headerSpacer} />
+        {section === "exercises" ? (
+            <TouchableOpacity
+              style={styles.skipExercisesButton}
+              onPress={() =>
+                navigation.navigate("Conversation", {
+                  lessonId,
+                })
+              }
+              activeOpacity={0.7}
+            >
+              <Text style={styles.skipExercisesText}>
+                Skip exercises
+              </Text>
+            </TouchableOpacity>
+          ) : (
+          <View style={styles.headerSpacer} />
+        )}
       </View>
 
       {/* ========================== */}
@@ -370,18 +389,6 @@ export default function LessonScreen({
                 </Text>
               )
             )}
-            <TouchableOpacity
-              style={styles.startConversationButton}
-              onPress={() =>
-                navigation.navigate("Conversation", {
-                  lessonId,
-                })
-              }
-            >
-              <Text style={styles.startConversationText}>
-                START CONVERSATION
-              </Text>
-            </TouchableOpacity>
           </View>
         )}
 
@@ -396,7 +403,7 @@ export default function LessonScreen({
             activeOpacity={0.8}
           >
             <Text style={styles.startButtonText}>
-              Start Exercises
+              Start Practice
             </Text>
 
             <Text style={styles.startButtonArrow}>
@@ -412,7 +419,10 @@ export default function LessonScreen({
 
       {section === "exercises" && (
         <View style={styles.exerciseScreen}>
-          {/* Progress */}
+
+          {/* ========================== */}
+          {/* PROGRESS */}
+          {/* ========================== */}
 
           <View style={styles.progressContainer}>
             <View style={styles.progressTrack}>
@@ -420,16 +430,10 @@ export default function LessonScreen({
                 style={[
                   styles.progressFill,
                   {
-                    width:
-                      progressAnimation.interpolate(
-                        {
-                          inputRange: [0, 100],
-                          outputRange: [
-                            "0%",
-                            "100%",
-                          ],
-                        }
-                      ),
+                    width: progressAnimation.interpolate({
+                      inputRange: [0, 100],
+                      outputRange: ["0%", "100%"],
+                    }),
                   },
                 ]}
               />
@@ -511,7 +515,7 @@ export default function LessonScreen({
                 >
                   {currentExercise ===
                   lesson.exercises.length - 1
-                    ? "Finish Lesson"
+                    ? "Start Conversation"
                     : "Continue"}
                 </Text>
 
@@ -545,8 +549,9 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     marginTop: 30,
+    minHeight: 64,
+    position: "relative",
   },
 
   backButton: {
@@ -565,6 +570,10 @@ const styles = StyleSheet.create({
   },
 
   headerTitle: {
+    position:"absolute",
+    left: 0,
+    right: 0,
+    textAlign:"center",
     color: COLORS.navy,
     fontSize: 16,
     fontWeight: "800",
@@ -636,12 +645,12 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    color: COLORS.cream,
+    color: COLORS.brown,
     fontSize: 22,
     fontWeight: "900",
     marginHorizontal: 24,
-    marginTop: 5,
-    marginBottom: 10,
+    marginTop: 10,
+    marginBottom: 12,
   },
 
   /* ========================== */
@@ -833,7 +842,7 @@ const styles = StyleSheet.create({
 
   progressContainer: {
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 10,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
@@ -841,16 +850,17 @@ const styles = StyleSheet.create({
 
   progressTrack: {
     flex: 1,
-    height: 7,
+    height: 9,
     backgroundColor: COLORS.sage,
-    borderRadius: 10,
+    borderRadius: 5,
     overflow: "hidden",
   },
 
+
   progressFill: {
     height: "100%",
-    backgroundColor: COLORS.brown,
-    borderRadius: 10,
+    borderRadius: 5,
+    backgroundColor: COLORS.gold,
   },
 
   progressText: {
@@ -884,6 +894,18 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.ivory,
     borderRadius: 22,
     padding: 20,
+  },
+
+  skipExercisesButton: {
+    marginLeft: "auto",
+    paddingVertical: 8,
+    paddingLeft: 10,
+  },
+
+  skipExercisesText: {
+    color: COLORS.muted,
+    fontSize: 13,
+    fontWeight: "700",
   },
 
   /* ========================== */
