@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -118,6 +118,8 @@ export default function ConversationScreen({
   const [transcribing, setTranscribing] = useState(false);
 
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+
+  const initialized = useRef(false);
 
   const handleLeavePress = () => {
     setShowLeaveModal(true);
@@ -248,6 +250,11 @@ export default function ConversationScreen({
   };
 
   useEffect(() => {
+    if(initialized.current){
+      return;
+    }
+
+    initialized.current = true;
     initializeConversation();
   }, []);
 
@@ -389,8 +396,6 @@ export default function ConversationScreen({
           setCorrect(false);
           setHint(result.hint);
         }
-        console.log("Correct:", correctResponses);
-        console.log("Hints:", hintsUsed); 
 
         setMessages((prev) => [
           ...prev,
@@ -406,6 +411,23 @@ export default function ConversationScreen({
 
         if (result.completed) {
           setCompleted(true);
+
+          const finalCorrectResponses =
+            correctResponses + (result.correct ? 1 : 0);
+
+          const finalHintsUsed =
+            hintsUsed +
+            (!result.correct && result.hint ? 1 : 0);
+
+          navigation.navigate("Feedback", {
+            lessonId,
+            conversationId,
+            totalSteps,
+            correctResponses: finalCorrectResponses,
+            hintsUsed: finalHintsUsed,
+            vocabularyCount: vocabulary.length,
+            grammarCount: 0,
+          });
         }
       } else {
         console.log(
@@ -441,98 +463,9 @@ export default function ConversationScreen({
     }
   };
 
-  /*
-   * ==========================================================
-   * SEND MESSAGE
-   * ==========================================================
-   */
-
-  const handleSend = async () => {
-    if (
-      !currentMessage.trim() ||
-      conversationId === null ||
-      sending ||
-      completed
-    ) {
-      return;
-    }
-
-    const userMessage = currentMessage.trim();
-
-    // Show the user's message immediately
-    setMessages((prev) => [
-      ...prev,
-      {
-        sender: "user",
-        message: userMessage,
-      },
-    ]);
-
-    // Clear the input immediately
-    setCurrentMessage("");
-
-    try {
-      setSending(true);
-      setError(null);
-
-      const result = await sendConversationMessage(
-        conversationId,
-        userMessage
-      );
-
-      setCurrentStep(result.current_step);
-
-      if (result.correct) {
-        setCorrectResponses((prev) => prev + 1);
-
-        setFeedback(null);
-        setCorrect(true);
-        setHint(null);
-      } else {
-        if(result.hint) {
-          setHintsUsed((prev) => prev + 1)
-        }
-        setFeedback(result.message);
-        setCorrect(false);
-        setHint(result.hint);
-      }
-      console.log("Correct:", correctResponses);
-      console.log("Hints:", hintsUsed);
-
-      // Only add the character response when it arrives
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: "character",
-          message: result.message,
-        },
-      ]);
-
-      await playCharacterVoice(result.message);
-
-      if (result.completed) {
-        setCompleted(true);
-      }
-    } catch (err) {
-      console.error(
-        "Failed to send conversation message:",
-        err
-      );
-
-      setError(
-        "Unable to send your response."
-      );
-    } finally {
-      setSending(false);
-      setTranscribing(false);
-      setRecording(false);
-    }
-  };
-
   const conversationProgress = completed
     ? 100
     : 50 + (50 * (currentStep - 1)) / totalSteps;
-
 
   /*
    * ==========================================================
@@ -837,44 +770,9 @@ export default function ConversationScreen({
       </View>
 
 
-      {/* =====================================================
-          COMPLETED
-      ===================================================== */}
-
-      {completed ? (
-        <View
-          style={styles.completedArea}
-        >
-          <Text
-            style={styles.completedTitle}
-          >
-            🎉 Great job!
-          </Text>
-
-          <Text
-            style={styles.completedText}
-          >
-            You completed the conversation.
-          </Text>
-
-          <TouchableOpacity
-            style={styles.continueButton}
-            onPress={()=> navigation.goBack()}
-            activeOpacity={0.85}
-          >
-            <Text
-              style={
-                styles.continueButtonText
-              }
-            >
-              CONTINUE
-            </Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        /* ===================================================
+        {/* ===================================================
            INPUT
-        =================================================== */
+        =================================================== */}
 
         <View style={styles.voiceInputArea}>
           <TouchableOpacity
@@ -899,7 +797,6 @@ export default function ConversationScreen({
               )}
             </TouchableOpacity>
         </View>
-      )}
 
       {/* =====================================================
           LEAVE CONVO MODAL
@@ -1466,60 +1363,6 @@ const styles = StyleSheet.create({
 
   micIcon: {
     fontSize: 38,
-  },
-
-  /*
-   * ==========================================================
-   * COMPLETED
-   * ==========================================================
-   */
-
-  completedArea: {
-    backgroundColor: COLORS.navy,
-    paddingHorizontal: 20,
-    paddingTop: 14,
-    paddingBottom: 25,
-    alignItems: "center",
-    borderTopWidth: 1,
-    borderTopColor: COLORS.navyLight,
-  },
-
-  completedTitle: {
-    color: COLORS.cream,
-    fontSize: 21,
-    fontWeight: "900",
-    marginBottom: 4,
-  },
-
-  completedText: {
-    color: COLORS.creamSoft,
-    fontSize: 14,
-    marginBottom: 14,
-  },
-
-  continueButton: {
-    width: "100%",
-    height: 54,
-    borderRadius: 16,
-    backgroundColor: COLORS.gold,
-    justifyContent: "center",
-    alignItems: "center",
-
-    shadowColor: COLORS.navy,
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 4,
-  },
-
-  continueButtonText: {
-    color: COLORS.navy,
-    fontSize: 15,
-    fontWeight: "900",
-    letterSpacing: 1.5,
   },
 
   modalOverlay: {

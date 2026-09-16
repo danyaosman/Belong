@@ -104,47 +104,7 @@ Users can have basic voice conversations.
 
 ---
 
-## Phase 6 – Agentic AI
-
-Goal
-
-Implement the AI orchestration layer.
-
-Tasks
-
-- LangGraph
-- Orchestrator
-- Lesson Agent
-- Character Agent
-- Memory Agent
-- Evaluation Agent
-
-Deliverable
-
-Lesson-aware AI conversations.
-
----
-
-## Phase 7 – Retrieval-Augmented Generation
-
-Goal
-
-Provide contextual AI responses.
-
-Tasks
-
-- Configure Qdrant
-- Generate embeddings
-- Build knowledge base
-- Retrieve lesson context
-
-Deliverable
-
-AI conversations grounded in lesson content.
-
----
-
-## Phase 8 – Speaking Evaluation
+## Phase 6 – Speaking Evaluation
 
 Goal
 
@@ -164,7 +124,7 @@ Complete speaking assessment.
 
 ---
 
-## Phase 9 – Story Experience
+## Phase 7 – Story Experience
 
 Goal
 
@@ -183,7 +143,7 @@ Immersive lesson experience.
 
 ---
 
-## Phase 10 – Polish & Deployment
+## Phase 8 – Polish & Deployment
 
 Goal
 
