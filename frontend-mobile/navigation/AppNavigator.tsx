@@ -16,6 +16,8 @@ import ConversationScreen from "../screens/ConversationScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import FeedbackScreen from "../screens/FeedbackScreen";
 
+import { UserRecording } from "../types/feedback";
+
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
@@ -34,7 +36,7 @@ export type RootStackParamList = {
     correctResponses: number;
     hintsUsed: number;
     vocabularyCount: number;
-    grammarCount: number;
+    userRecordings: UserRecording[];
   };
 };
 

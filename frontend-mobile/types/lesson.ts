@@ -32,13 +32,6 @@ export interface GrammarItem {
   translation: string;
 }
 
-export interface ConversationStep {
-  id: number;
-  character_message: string;
-  target_phrases: string[];
-  hint: string;
-}
-
 export interface Lesson {
   id: number;
   title: string;

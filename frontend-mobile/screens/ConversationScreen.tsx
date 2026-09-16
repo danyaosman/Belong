@@ -41,6 +41,9 @@ import {
 import {
   VocabularyItem,
 } from "../types/lesson";
+import type {
+  UserRecording 
+} from "../types/feedback";
 
 import InteractiveMessage from "../components/vocabulary/InteractiveMessage";
 
@@ -115,9 +118,14 @@ export default function ConversationScreen({
   const [recording, setRecording] =
     useState(false);
     
-  const [transcribing, setTranscribing] = useState(false);
+  const [transcribing, setTranscribing] = 
+    useState(false);
 
-  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showLeaveModal, setShowLeaveModal] = 
+    useState(false);
+
+  const [userRecordings, setUserRecordings] =
+    useState<UserRecording[]>([]);
 
   const initialized = useRef(false);
 
@@ -319,9 +327,17 @@ export default function ConversationScreen({
           );
         }
 
+        const recordingUri = 
+        `${FileSystem.cacheDirectory}belong_recording_${Date.now}.m4a`
+
+        await FileSystem.copyAsync({
+          from: uri,
+          to: recordingUri,
+        });
+
         console.log(
-          "Recording saved:",
-          uri
+          "Recording copied:",
+          recordingUri
         );
 
         setError(null);
@@ -357,6 +373,14 @@ export default function ConversationScreen({
         // Send the transcription directly
         // instead of waiting for the user to press Send.
         const userMessage = text.trim();
+
+        setUserRecordings((prev) => [
+          ...prev,
+          {
+            text: userMessage,
+            audioUri: recordingUri,
+          },
+        ]);
 
         if (conversationId === null) {
           throw new Error(
@@ -426,7 +450,13 @@ export default function ConversationScreen({
             correctResponses: finalCorrectResponses,
             hintsUsed: finalHintsUsed,
             vocabularyCount: vocabulary.length,
-            grammarCount: 0,
+            userRecordings: [
+              ...userRecordings,
+              {
+                text: userMessage,
+                audioUri: recordingUri,
+              }
+            ],
           });
         }
       } else {
