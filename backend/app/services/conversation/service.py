@@ -3,7 +3,7 @@ import json
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.models.conversation import (
     Conversation,
@@ -18,6 +18,7 @@ from app.repositories.convo_message_repository import (
     conversation_message_repository,
 )
 from app.repositories.lesson_repository import LessonRepository
+from app.repositories.user_repository import UserRepository
 
 from app.services.conversation.script_loader import (
     load_lesson_script,
@@ -30,7 +31,11 @@ from app.schemas.conversation import (
     ConversationStepResponse,
 )
 from app.services.ai.gemini import evaluate_conversation_response
-
+from app.services.user.progress import (
+    get_current_hearts,
+    lose_heart,
+    award_conversation_xp,
+)
 
 def get_lesson_conversation(
     db: Session,
@@ -53,6 +58,15 @@ def start_conversation(
     user_id: int,
     lesson_id: int,
 ):
+    user_repository = UserRepository()
+    user = user_repository.get_by_id(db, user_id)
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found.",
+        )
+
     lesson_repository = LessonRepository()
     lesson = lesson_repository.get_by_id(
         db,
@@ -71,6 +85,14 @@ def start_conversation(
             detail="This lesson does not have a character assigned.",
         )
 
+    current_hearts = get_current_hearts(db, user)
+
+    if current_hearts <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Not enough hearts to start this lesson."
+        )
+    
     script = load_lesson_script(
         lesson.level,
         lesson.lesson_number,
@@ -154,6 +176,23 @@ def send_message(
     user_id: int,
     message: str,
 ):
+    user_repository = UserRepository()
+    user = user_repository.get_by_id(db, user_id)
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found.",
+        )
+
+    current_hearts = get_current_hearts(db, user)
+
+    if current_hearts <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Not enough hearts to continue this lesson.",
+        )
+    
     conversation = get_conversation(
         db,
         conversation_id,
@@ -263,6 +302,9 @@ def send_message(
 
     if not evaluation.correct:
 
+        conversation.had_mistake = True
+        hearts = lose_heart(db, user)
+
         character_text = evaluation.character_message
 
         character_message = ConversationMessage(
@@ -276,6 +318,21 @@ def send_message(
             character_message,
         )
 
+        if hearts <=0:
+            conversation.status = ConversationStatus.ABANDONED
+            conversation.ended_at = datetime.now(timezone.utc)
+
+            db.commit()
+
+            return {
+                "correct": False,
+                "message": character_text,
+                "hint": evaluation.hint,
+                "current_step": conversation.current_step,
+                "completed": False,
+                "abandoned": True,
+            }
+
         db.commit()
 
         return {
@@ -284,6 +341,7 @@ def send_message(
             "hint": evaluation.hint,
             "current_step": conversation.current_step,
             "completed": False,
+            "abandoned": False,
         }
 
     # ---------------------------------------------------------
@@ -299,8 +357,13 @@ def send_message(
     if next_step_id > len(steps):
 
         conversation.status = ConversationStatus.COMPLETED
-        conversation.ended_at = datetime.utcnow()
+        conversation.ended_at = datetime.now(timezone.utc)
 
+        xp_earned = award_conversation_xp(
+            db,
+            user,
+            conversation.had_mistake,
+        )
         character_text = evaluation.character_message
 
         character_message = ConversationMessage(
@@ -322,6 +385,8 @@ def send_message(
             "hint": None,
             "current_step": conversation.current_step,
             "completed": True,
+            "abandoned": False,
+            "xp_earned": xp_earned,
         }
 
     # ---------------------------------------------------------
@@ -357,6 +422,7 @@ def send_message(
         "hint": None,
         "current_step": conversation.current_step,
         "completed": False,
+        "abandoned": False
     }
 
 

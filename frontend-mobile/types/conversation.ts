@@ -30,4 +30,6 @@ export interface ConversationTurn {
   hint: string | null;
   current_step: number;
   completed: boolean;
+  abandoned: boolean;
+  xp_earned?: number;
 }

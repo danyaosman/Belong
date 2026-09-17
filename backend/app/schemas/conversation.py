@@ -61,3 +61,5 @@ class ConversationTurnResponse(BaseModel):
     hint: str | None = None
     current_step: int
     completed: bool
+    abandoned: bool
+    xp_earned: int | None = None

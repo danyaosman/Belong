@@ -17,6 +17,7 @@ import ProfileScreen from "../screens/ProfileScreen";
 import FeedbackScreen from "../screens/FeedbackScreen";
 
 import { UserRecording } from "../types/feedback";
+import { VocabularyItem } from "../types/lesson";
 
 export type RootStackParamList = {
   Login: undefined;
@@ -35,8 +36,9 @@ export type RootStackParamList = {
     totalSteps: number;
     correctResponses: number;
     hintsUsed: number;
-    vocabularyCount: number;
+    usedVocab: VocabularyItem[];
     userRecordings: UserRecording[];
+    xpEarned: number;
   };
 };
 

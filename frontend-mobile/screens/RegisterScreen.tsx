@@ -13,6 +13,8 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from "react-native";
 
 import { COLORS } from "../theme/colors";
@@ -92,197 +94,201 @@ export default function RegisterScreen({
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={
-        Platform.OS === "ios"
-          ? "padding"
-          : undefined
-      }
+    <TouchableWithoutFeedback
+    onPress={Keyboard.dismiss}
     >
-      <SafeAreaView
-        style={styles.safeArea}
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={
+          Platform.OS === "ios"
+            ? "padding"
+            : undefined
+        }
       >
-        <ScrollView
-          contentContainerStyle={
-            styles.content
-          }
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={
-            false
-          }
+        <SafeAreaView
+          style={styles.safeArea}
         >
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() =>
-              navigation.goBack()
+          <ScrollView
+            contentContainerStyle={
+              styles.content
+            }
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={
+              false
             }
           >
-            <Text
-              style={styles.backText}
-            >
-              ← Back
-            </Text>
-          </TouchableOpacity>
-
-          <View style={styles.header}>
-            <View
-              style={styles.logoCircle}
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() =>
+                navigation.goBack()
+              }
             >
               <Text
-                style={styles.logoSymbol}
+                style={styles.backText}
               >
-                ✦
+                ← Back
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.header}>
+              <View
+                style={styles.logoCircle}
+              >
+                <Text
+                  style={styles.logoSymbol}
+                >
+                  ✦
+                </Text>
+              </View>
+
+              <Text style={styles.logo}>
+                Join Belong
+              </Text>
+
+              <Text
+                style={styles.subtitle}
+              >
+                Start your language
+                journey.
               </Text>
             </View>
 
-            <Text style={styles.logo}>
-              Join Belong
-            </Text>
-
-            <Text
-              style={styles.subtitle}
-            >
-              Start your language
-              journey.
-            </Text>
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.title}>
-              Create your account
-            </Text>
-
-            <Text style={styles.label}>
-              Username
-            </Text>
-
-            <TextInput
-              style={styles.input}
-              value={username}
-              onChangeText={setUsername}
-              placeholder="Choose a username"
-              placeholderTextColor={
-                COLORS.muted
-              }
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-
-            <Text style={styles.label}>
-              Email
-            </Text>
-
-            <TextInput
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="you@example.com"
-              placeholderTextColor={
-                COLORS.muted
-              }
-              autoCapitalize="none"
-              keyboardType="email-address"
-              autoCorrect={false}
-            />
-
-            <Text style={styles.label}>
-              Password
-            </Text>
-
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Create a password"
-              placeholderTextColor={
-                COLORS.muted
-              }
-              secureTextEntry
-              autoCapitalize="none"
-            />
-
-            <Text style={styles.label}>
-              Native language
-            </Text>
-
-            <TextInput
-              style={styles.input}
-              value={nativeLanguage}
-              onChangeText={
-                setNativeLanguage
-              }
-              placeholder="English"
-              placeholderTextColor={
-                COLORS.muted
-              }
-              autoCapitalize="words"
-            />
-
-            {error ? (
-              <View
-                style={styles.errorBox}
-              >
-                <Text
-                  style={
-                    styles.errorText
-                  }
-                >
-                  {error}
-                </Text>
-              </View>
-            ) : null}
-
-            <TouchableOpacity
-              style={[
-                styles.registerButton,
-                loading &&
-                  styles.disabledButton,
-              ]}
-              onPress={handleRegister}
-              disabled={loading}
-              activeOpacity={0.85}
-            >
-              {loading ? (
-                <ActivityIndicator
-                  color={COLORS.navy}
-                />
-              ) : (
-                <Text
-                  style={
-                    styles.registerButtonText
-                  }
-                >
-                  Create account
-                </Text>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          <View
-            style={styles.loginRow}
-          >
-            <Text style={styles.loginText}>
-              Already have an account?
-            </Text>
-
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate(
-                  "Login",
-                )
-              }
-            >
-              <Text
-                style={styles.loginLink}
-              >
-                Log in
+            <View style={styles.card}>
+              <Text style={styles.title}>
+                Create your account
               </Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+
+              <Text style={styles.label}>
+                Username
+              </Text>
+
+              <TextInput
+                style={styles.input}
+                value={username}
+                onChangeText={setUsername}
+                placeholder="Choose a username"
+                placeholderTextColor={
+                  COLORS.muted
+                }
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+
+              <Text style={styles.label}>
+                Email
+              </Text>
+
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="you@example.com"
+                placeholderTextColor={
+                  COLORS.muted
+                }
+                autoCapitalize="none"
+                keyboardType="email-address"
+                autoCorrect={false}
+              />
+
+              <Text style={styles.label}>
+                Password
+              </Text>
+
+              <TextInput
+                style={styles.input}
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Create a password"
+                placeholderTextColor={
+                  COLORS.muted
+                }
+                secureTextEntry
+                autoCapitalize="none"
+              />
+
+              <Text style={styles.label}>
+                Native language
+              </Text>
+
+              <TextInput
+                style={styles.input}
+                value={nativeLanguage}
+                onChangeText={
+                  setNativeLanguage
+                }
+                placeholder="English"
+                placeholderTextColor={
+                  COLORS.muted
+                }
+                autoCapitalize="words"
+              />
+
+              {error ? (
+                <View
+                  style={styles.errorBox}
+                >
+                  <Text
+                    style={
+                      styles.errorText
+                    }
+                  >
+                    {error}
+                  </Text>
+                </View>
+              ) : null}
+
+              <TouchableOpacity
+                style={[
+                  styles.registerButton,
+                  loading &&
+                    styles.disabledButton,
+                ]}
+                onPress={handleRegister}
+                disabled={loading}
+                activeOpacity={0.85}
+              >
+                {loading ? (
+                  <ActivityIndicator
+                    color={COLORS.navy}
+                  />
+                ) : (
+                  <Text
+                    style={
+                      styles.registerButtonText
+                    }
+                  >
+                    Create account
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <View
+              style={styles.loginRow}
+            >
+              <Text style={styles.loginText}>
+                Already have an account?
+              </Text>
+
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate(
+                    "Login",
+                  )
+                }
+              >
+                <Text
+                  style={styles.loginLink}
+                >
+                  Log in
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
   );
 }
 

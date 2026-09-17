@@ -138,6 +138,19 @@ export default function ConversationScreen({
     navigation.navigate("Home");
   };
 
+  const getUsedVocabulary = () => {
+    const conversationText = messages
+      .map((item) => item.message)
+      .join(" ")
+      .toLocaleLowerCase("tr-TR");
+
+    return vocabulary.filter((item) =>
+      conversationText.includes(
+        item.turkish.toLocaleLowerCase("tr-TR")
+      )
+    );
+  };
+
   const playCharacterVoice = async (text: string) => {
     try {
       const response = await fetch(
@@ -328,7 +341,7 @@ export default function ConversationScreen({
         }
 
         const recordingUri = 
-        `${FileSystem.cacheDirectory}belong_recording_${Date.now}.m4a`
+        `${FileSystem.cacheDirectory}belong_recording_${Date.now()}.m4a`
 
         await FileSystem.copyAsync({
           from: uri,
@@ -403,6 +416,9 @@ export default function ConversationScreen({
             conversationId,
             userMessage
           );
+
+        console.log("Conversation result:", result);
+        console.log("XP earned:", result.xp_earned);
         
         setCurrentStep(result.current_step);
 
@@ -433,6 +449,11 @@ export default function ConversationScreen({
           result.message
         );
 
+        if (result.abandoned) {
+          navigation.navigate("Home");
+          return
+        }
+        
         if (result.completed) {
           setCompleted(true);
 
@@ -449,7 +470,7 @@ export default function ConversationScreen({
             totalSteps,
             correctResponses: finalCorrectResponses,
             hintsUsed: finalHintsUsed,
-            vocabularyCount: vocabulary.length,
+            usedVocab: getUsedVocabulary(),
             userRecordings: [
               ...userRecordings,
               {
@@ -457,6 +478,7 @@ export default function ConversationScreen({
                 audioUri: recordingUri,
               }
             ],
+            xpEarned: result.xp_earned!,
           });
         }
       } else {

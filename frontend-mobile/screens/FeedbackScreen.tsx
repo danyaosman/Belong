@@ -29,8 +29,9 @@ export default function FeedbackScreen({
     totalSteps,
     correctResponses,
     hintsUsed,
-    vocabularyCount,
+    usedVocab,
     userRecordings,
+    xpEarned,
   } = route.params;
 
   const player = useAudioPlayer(null);
@@ -230,25 +231,30 @@ export default function FeedbackScreen({
           </View>
         </View>
 
-        {/* =========================
-            PROGRESS
-        ========================== */}
+      {/* =========================
+          XP REWARD
+      ========================== */}
 
-        <View style={styles.progressCard}>
-          <Text style={styles.progressPercentage}>
-            100%
-          </Text>
+      <View style={styles.progressCard}>
+        <Text style={styles.progressPercentage}>
+          +{xpEarned} XP
+        </Text>
 
-          <View style={styles.progressTrack}>
-            <View
-              style={styles.progressFill}
-            />
-          </View>
-
-          <Text style={styles.progressText}>
-            Lesson completed
-          </Text>
+        <View style={styles.progressTrack}>
+          <View
+            style={[
+              styles.progressFill,
+              {
+                width: `${accuracy}%`,
+              },
+            ]}
+          />
         </View>
+
+        <Text style={styles.progressText}>
+          {accuracy}% conversation accuracy
+        </Text>
+      </View>
 
         {/* =========================
             PERFORMANCE
@@ -339,24 +345,29 @@ export default function FeedbackScreen({
           </Text>
 
           <View style={styles.learningCard}>
-            <View style={styles.learningRow}>
-              <View>
-                <Text style={styles.learningTitle}>
-                  Vocabulary
+            {usedVocab.length === 0 ? (
+                <Text style={styles.emptyVocabularyText}>
+                No lesson vocabulary was used in the conversation.
                 </Text>
-
-                <Text
-                  style={styles.learningSubtitle}
+            ) : (
+                usedVocab.map((item, index) => (
+                <View
+                    key={`${item.turkish}-${index}`}
+                    style={styles.vocabularyRow}
                 >
-                  {vocabularyCount}{" "}
-                  {vocabularyCount === 1
-                    ? "word"
-                    : "words"}{" "}
-                  from this lesson
-                </Text>
-              </View>
+                    <View>
+                    <Text style={styles.vocabularyTurkish}>
+                        {item.turkish}
+                    </Text>
+
+                    <Text style={styles.vocabularyEnglish}>
+                        {item.english}
+                    </Text>
+                </View>
             </View>
-          </View>
+            ))
+        )}
+        </View>
         </View>
 
         {/* =========================
@@ -651,6 +662,31 @@ const styles = StyleSheet.create({
   learningSubtitle: {
     color: COLORS.muted,
     fontSize: 13,
+  },
+
+  vocabularyRow: {
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.sage,
+  },
+
+  vocabularyTurkish: {
+    color: COLORS.navy,
+    fontSize: 16,
+    fontWeight: "800",
+  },
+
+  vocabularyEnglish: {
+    color: COLORS.muted,
+    fontSize: 13,
+    marginTop: 3,
+  },
+
+  emptyVocabularyText: {
+    color: COLORS.muted,
+    fontSize: 14,
+    paddingVertical: 18,
+    textAlign: "center",
   },
 
   /*
