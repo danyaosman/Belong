@@ -11,7 +11,7 @@ import {
 import ExerciseRenderer from "../components/exercises/ExerciseRenderer";
 import { getLesson, getLessonConversation } from "../services/lessonService";
 import { COLORS } from "../theme/colors";
-import { Lesson, ConversationContent } from "../types/lesson";
+import { LessonContent, ConversationContent } from "../types/lesson";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/AppNavigator";
 
@@ -25,7 +25,7 @@ export default function LessonScreen({
   navigation,
 }: Props) {
   const { lessonId } = route.params;
-  const [lesson, setLesson] = useState<Lesson | null>(null);
+  const [lesson, setLesson] = useState<LessonContent | null>(null);
 
   const [conversation, setConversation] =
   useState<ConversationContent | null>(null);

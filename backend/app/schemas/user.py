@@ -14,5 +14,7 @@ class UserResponse(BaseModel):
     username: str
     native_language: str
     is_active: bool
+    hearts: int
+    xp: int
 
     model_config = ConfigDict(from_attributes=True)

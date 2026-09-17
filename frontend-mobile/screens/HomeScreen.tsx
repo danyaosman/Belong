@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   SafeAreaView,
   StyleSheet,
@@ -10,6 +10,10 @@ import {
 import { COLORS } from "../theme/colors";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/AppNavigator";
+import { useAuth } from "../context/AuthContext";
+
+import { getLessons } from "../services/lessonService";
+import { Lesson } from "../types/lesson";
 
 type Props = NativeStackScreenProps<
   RootStackParamList,
@@ -19,11 +23,26 @@ type Props = NativeStackScreenProps<
 export default function HomeScreen({
   navigation,
 }: Props) {
-  const [screen, setScreen] = useState<
-  "home" | "lesson" | "conversation"
-  >("home");
+  const { user } = useAuth()
 
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    async function loadLessons() {
+      try {
+        const data = await getLessons();
+        setLessons(data);
+      } catch (error) {
+        console.error("Failed to load lessons:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadLessons();
+  }, []);
+  
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -31,52 +50,32 @@ export default function HomeScreen({
           <Text style={styles.logo}>Belong</Text>
 
           <View style={styles.stats}>
-            <Text style={styles.stat}>🔥 7</Text>
-            <Text style={styles.stat}>✦ 1,250</Text>
+            <Text style={styles.stat}>♥ {user?.hearts ?? 0}</Text>
+            <Text style={styles.stat}>★ {user?.xp ?? 0}</Text>
           </View>
         </View>
 
         <View style={styles.content}>
           <Text style={styles.sectionLabel}>LEVEL 1</Text>
           <Text style={styles.title}>Greetings</Text>
-
           <View style={styles.lessonPath}>
-            {/* LESSON 1 */}
-            <TouchableOpacity
-              style={styles.lessonNode}
-              onPress={() => {
-                navigation.navigate("Lesson", {
-                    lessonId:1,
-                });
-            }}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.nodeText}>★</Text>
-            </TouchableOpacity>
-
-            {/* LESSON 2 */}
-            <TouchableOpacity
-              style={[styles.lessonNode, styles.offset]}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.nodeText}>★</Text>
-            </TouchableOpacity>
-
-            {/* LISTENING */}
-            <TouchableOpacity
-              style={styles.lessonNode}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.nodeText}>🎧</Text>
-            </TouchableOpacity>
-
-            {/* LESSON 4 */}
-            <TouchableOpacity
-              style={[styles.lessonNode, styles.offset]}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.nodeText}>★</Text>
-            </TouchableOpacity>
+            {lessons.map((lesson, index) => (
+              <TouchableOpacity
+                key={lesson.id}
+                style={[
+                  styles.lessonNode,
+                  index % 2 === 1 && styles.offset,
+                ]}
+                onPress={() => {
+                  navigation.navigate("Lesson", {
+                    lessonId: lesson.id,
+                  });
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.nodeText}>★</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
       </SafeAreaView>

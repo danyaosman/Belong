@@ -39,7 +39,9 @@ export interface Lesson {
   level: number;
   lesson_number: number;
   character_id: number;
+}
 
+export interface LessonContent extends Lesson {
   vocabulary: VocabularyItem[];
   grammar: GrammarItem[];
   exercises: Exercise[];
