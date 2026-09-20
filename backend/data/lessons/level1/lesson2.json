@@ -1,0 +1,254 @@
+{
+  "title": "Daily Life",
+  "description": "Talk about your daily routine, university life and what you do in your free time.",
+
+  "level": 1,
+  "lesson_number": 2,
+  "character_id": 1,
+
+  "conversation": {
+    "context": "You meet Dilara at university the next day and talk about your daily routine and what you usually do during the day.",
+    "goal": "Talk about your daily routine and ask someone about theirs.",
+
+    "success_criteria": [
+      "Talk about what you do in the morning",
+      "Say what time you do something",
+      "Talk about going to university",
+      "Talk about studying and learning",
+      "Talk about what you do in your free time"
+    ],
+
+    "steps": [
+      {
+        "id": 1,
+        "character_message": "Günaydın! Sabahları genellikle saat kaçta kalkıyorsun?",
+        "expected_intent": "talk_about_morning_routine",
+        "target_phrases": [
+          "Saat yedide kalkıyorum",
+          "Saat sekizde kalkıyorum",
+          "Sabah erken kalkıyorum"
+        ],
+        "hint": "You can say: Saat yedide kalkıyorum.",
+        "required": true
+      },
+      {
+        "id": 2,
+        "character_message": "Anladım! Peki, sabah kahvaltı yapıyor musun?",
+        "expected_intent": "talk_about_breakfast",
+        "target_phrases": [
+          "Evet, kahvaltı yapıyorum",
+          "Hayır, kahvaltı yapmıyorum",
+          "Sabah kahvaltı yapıyorum"
+        ],
+        "hint": "You can say: Evet, kahvaltı yapıyorum.",
+        "required": true
+      },
+      {
+        "id": 3,
+        "character_message": "Ben de kahvaltıdan sonra üniversiteye gidiyorum. Sen üniversiteye nasıl gidiyorsun?",
+        "expected_intent": "talk_about_transportation_to_university",
+        "target_phrases": [
+          "Otobüsle gidiyorum",
+          "Metro ile gidiyorum",
+          "Yürüyerek gidiyorum"
+        ],
+        "hint": "You can say: Otobüsle gidiyorum.",
+        "required": true
+      },
+      {
+        "id": 4,
+        "character_message": "Ben üniversitede ders çalışıyorum ve Türkçe öğreniyorum. Sen derslerden sonra ne yapıyorsun?",
+        "expected_intent": "talk_about_studying_and_free_time",
+        "target_phrases": [
+          "Ders çalışıyorum",
+          "Ödev yapıyorum",
+          "Kitap okuyorum",
+          "Müzik dinliyorum",
+          "Film izliyorum"
+        ],
+        "hint": "You can say: Derslerden sonra kitap okuyorum.",
+        "required": true
+      },
+      {
+        "id": 5,
+        "character_message": "Güzel! Bugün görüşürüz!",
+        "expected_intent": "say_goodbye",
+        "target_phrases": [
+          "Görüşürüz"
+        ],
+        "hint": "You can say: Görüşürüz!",
+        "required": true
+      }
+    ]
+  },
+
+  "vocabulary": [
+    {
+      "turkish": "Sabah",
+      "english": "Morning",
+      "arabic": "صباح",
+      "pronunciation": "sa-bah",
+      "example_sentence": "Sabah erken kalkıyorum.",
+      "example_translation": "I wake up early in the morning."
+    },
+    {
+      "turkish": "Akşam",
+      "english": "Evening",
+      "arabic": "مساء",
+      "pronunciation": "ak-sham",
+      "example_sentence": "Akşamları film izliyorum.",
+      "example_translation": "I watch movies in the evenings."
+    },
+    {
+      "turkish": "Kalkmak",
+      "english": "To get up",
+      "arabic": "يستيقظ / ينهض",
+      "pronunciation": "kal-mak",
+      "example_sentence": "Saat yedide kalkıyorum.",
+      "example_translation": "I get up at seven."
+    },
+    {
+      "turkish": "Kahvaltı",
+      "english": "Breakfast",
+      "arabic": "فطور",
+      "pronunciation": "kah-val-tuh",
+      "example_sentence": "Sabah kahvaltı yapıyorum.",
+      "example_translation": "I have breakfast in the morning."
+    },
+    {
+      "turkish": "Gitmek",
+      "english": "To go",
+      "arabic": "يذهب",
+      "pronunciation": "git-mek",
+      "example_sentence": "Üniversiteye gidiyorum.",
+      "example_translation": "I am going to university."
+    },
+    {
+      "turkish": "Çalışmak",
+      "english": "To study / work",
+      "arabic": "يدرس / يعمل",
+      "pronunciation": "cha-lush-mak",
+      "example_sentence": "Ders çalışıyorum.",
+      "example_translation": "I am studying."
+    },
+    {
+      "turkish": "Öğrenmek",
+      "english": "To learn",
+      "arabic": "يتعلم",
+      "pronunciation": "uh-ren-mek",
+      "example_sentence": "Türkçe öğreniyorum.",
+      "example_translation": "I am learning Turkish."
+    },
+    {
+      "turkish": "Ödev",
+      "english": "Homework",
+      "arabic": "واجب منزلي",
+      "pronunciation": "uh-dev",
+      "example_sentence": "Akşam ödev yapıyorum.",
+      "example_translation": "I do homework in the evening."
+    },
+    {
+      "turkish": "Kitap okumak",
+      "english": "To read a book",
+      "arabic": "يقرأ كتاباً",
+      "pronunciation": "ki-tap o-ku-mak",
+      "example_sentence": "Akşamları kitap okuyorum.",
+      "example_translation": "I read books in the evenings."
+    },
+    {
+      "turkish": "Müzik dinlemek",
+      "english": "To listen to music",
+      "arabic": "يستمع إلى الموسيقى",
+      "pronunciation": "mew-zik din-le-mek",
+      "example_sentence": "Müzik dinliyorum.",
+      "example_translation": "I am listening to music."
+    },
+    {
+      "turkish": "Film izlemek",
+      "english": "To watch a movie",
+      "arabic": "يشاهد فيلماً",
+      "pronunciation": "film iz-le-mek",
+      "example_sentence": "Akşam film izliyorum.",
+      "example_translation": "I watch a movie in the evening."
+    },
+    {
+      "turkish": "Otobüs",
+      "english": "Bus",
+      "arabic": "حافلة",
+      "pronunciation": "o-to-boos",
+      "example_sentence": "Üniversiteye otobüsle gidiyorum.",
+      "example_translation": "I go to university by bus."
+    }
+  ],
+
+  "grammar": [
+    {
+      "title": "Present continuous (-iyor)",
+      "explanation": "Use the -iyor form to talk about actions happening now or activities that you regularly do. The ending changes depending on the verb and vowel harmony.",
+      "example": "Gidiyorum. / Çalışıyorum. / Öğreniyorum.",
+      "translation": "I am going. / I am studying. / I am learning."
+    }
+  ],
+
+  "exercises": [
+    {
+      "type": "multiple_choice",
+      "question": "How do you say 'I am studying' in Turkish?",
+      "explanation": "The verb 'çalışmak' becomes 'çalışıyorum' in the present continuous form.",
+      "options": [
+        {
+          "text": "Çalışıyorum",
+          "is_correct": true
+        },
+        {
+          "text": "Çalıştım",
+          "is_correct": false
+        },
+        {
+          "text": "Çalışacağım",
+          "is_correct": false
+        },
+        {
+          "text": "Çalış",
+          "is_correct": false
+        }
+      ]
+    },
+    {
+      "type": "translation",
+      "question": "Translate: I am going to university.",
+      "explanation": "Use 'gidiyorum' for 'I am going' and 'üniversiteye' for 'to university'.",
+      "options": [
+        {
+          "text": "Üniversiteye gidiyorum.",
+          "is_correct": true
+        },
+        {
+          "text": "Üniversitede çalışıyorum.",
+          "is_correct": false
+        },
+        {
+          "text": "Üniversiteden geliyorum.",
+          "is_correct": false
+        }
+      ]
+    },
+    {
+      "type": "order_words",
+      "question": "Arrange the words to say 'I am learning Turkish.'",
+      "explanation": "The natural Turkish sentence is 'Türkçe öğreniyorum.'",
+      "options": [
+        {
+          "text": "Türkçe",
+          "is_correct": true,
+          "order_index": 1
+        },
+        {
+          "text": "öğreniyorum",
+          "is_correct": true,
+          "order_index": 2
+        }
+      ]
+    }
+  ]
+}
