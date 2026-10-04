@@ -62,6 +62,11 @@ class User(Base):
         nullable=False,
     )
 
+    user_vocabulary = relationship(
+        "UserVocabulary",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
     #current_lesson = relationship("Lesson")
     

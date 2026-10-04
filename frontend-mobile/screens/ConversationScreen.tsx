@@ -140,6 +140,7 @@ export default function ConversationScreen({
 
   const getUsedVocabulary = () => {
     const conversationText = messages
+      .filter((item) => item.sender == "user")
       .map((item) => item.message)
       .join(" ")
       .toLocaleLowerCase("tr-TR");

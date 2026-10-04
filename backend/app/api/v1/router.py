@@ -6,7 +6,8 @@ from app.api.v1.endpoints import (
     characters,
     conversation,
     tts,
-    stt
+    stt,
+    user_vocab,
 )
 
 api_router = APIRouter()
@@ -17,3 +18,4 @@ api_router.include_router(characters.router)
 api_router.include_router(conversation.router)
 api_router.include_router(tts.router)
 api_router.include_router(stt.router)
+api_router.include_router(user_vocab.router)

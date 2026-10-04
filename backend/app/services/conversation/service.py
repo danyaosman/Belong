@@ -25,6 +25,7 @@ from app.services.conversation.script_loader import (
 )
 
 from app.services.lesson.service import get_lesson
+from app.services.vocabulary.user_vocabulary import get_user_vocabulary
 from app.schemas.conversation import (
     ConversationResponse,
     ConversationContentResponse,
@@ -363,6 +364,12 @@ def send_message(
             db,
             user,
             conversation.had_mistake,
+        )
+
+        add_lesson_vocabulary(
+            db,
+            user.id,
+            lesson.vocabulary,
         )
         character_text = evaluation.character_message
 

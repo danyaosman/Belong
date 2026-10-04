@@ -27,3 +27,9 @@ class Vocabulary(Base):
         "Lesson",
         back_populates="vocabulary",
     )
+
+    user_vocabulary = relationship(
+        "UserVocabulary",
+        back_populates="vocabulary",
+        cascade="all, delete-orphan",
+    )

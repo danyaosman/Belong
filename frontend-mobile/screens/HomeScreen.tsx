@@ -86,12 +86,16 @@ export default function HomeScreen({
           <Text style={styles.navItem}>⌂</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.navButton}>
-          <Text style={styles.navItem}>▣</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.navButton}>
-          <Text style={styles.navItem}>💬</Text>
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() =>
+            navigation.navigate("Vocabulary")
+          }
+          activeOpacity={0.7}
+        >
+          <Text style={styles.navItem}>
+            📖
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity 

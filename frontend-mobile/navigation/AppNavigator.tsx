@@ -15,6 +15,7 @@ import LessonScreen from "../screens/LessonScreen";
 import ConversationScreen from "../screens/ConversationScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import FeedbackScreen from "../screens/FeedbackScreen";
+import VocabularyScreen from "../screens/VocabularyScreen";
 
 import { UserRecording } from "../types/feedback";
 import { VocabularyItem } from "../types/lesson";
@@ -40,6 +41,7 @@ export type RootStackParamList = {
     userRecordings: UserRecording[];
     xpEarned: number;
   };
+  Vocabulary: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -80,6 +82,11 @@ export default function AppNavigator() {
             <Stack.Screen
               name="Profile"
               component={ProfileScreen}
+            />
+
+            <Stack.Screen
+              name="Vocabulary"
+              component={VocabularyScreen}
             />
           </>
         ) : (
