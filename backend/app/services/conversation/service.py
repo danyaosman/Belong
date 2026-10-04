@@ -37,6 +37,7 @@ from app.services.user.progress import (
     lose_heart,
     award_conversation_xp,
 )
+from app.services.vocabulary.user_vocabulary import add_lesson_vocabulary
 
 def get_lesson_conversation(
     db: Session,

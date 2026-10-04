@@ -32,11 +32,11 @@ router = APIRouter(
 def create_conversation(
     data: ConversationStart,
     db: Session = Depends(get_db),
-    #current_user=Depends(get_current_user),
+    current_user=Depends(get_current_user),
 ):
     return start_conversation(
         db,
-        user_id = 1,
+        user_id=current_user.id,
         lesson_id=data.lesson_id,
     )
 
@@ -48,12 +48,12 @@ def create_conversation(
 def read_conversation(
     conversation_id: int,
     db: Session = Depends(get_db),
-    #current_user=Depends(get_current_user),
+    current_user=Depends(get_current_user),
 ):
     return get_conversation(
         db,
         conversation_id,
-        user_id=1,
+        user_id=current_user.id,
     )
 
 
@@ -63,11 +63,11 @@ def read_conversation(
 )
 def read_user_conversations(
     db: Session = Depends(get_db),
-    #current_user=Depends(get_current_user),
+    current_user=Depends(get_current_user),
 ):
     return get_user_conversations(
         db,
-        user_id=1,
+        user_id=current_user.id,
     )
 
 
@@ -79,12 +79,12 @@ def create_message(
     conversation_id: int,
     data: MessageCreate,
     db: Session = Depends(get_db),
-    #current_user=Depends(get_current_user),
+    current_user=Depends(get_current_user),
 ):
     return send_message(
         db,
         conversation_id,
-        user_id=1,
+        user_id=current_user.id,
         message=data.message,
     )
 
@@ -96,10 +96,10 @@ def create_message(
 def read_conversation_messages(
     conversation_id: int,
     db: Session = Depends(get_db),
-    #current_user=Depends(get_current_user),
+    current_user=Depends(get_current_user),
 ):
     return get_conversation_messages(
         db,
         conversation_id,
-        user_id=1,
+        user_id=current_user.id,
     )

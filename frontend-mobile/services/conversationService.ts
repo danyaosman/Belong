@@ -2,93 +2,77 @@ import {
   Conversation,
   ConversationMessage,
   ConversationTurn,
-  
 } from "../types/conversation";
 
-const API_URL =
-  "https://spectrum-resize-nerd.ngrok-free.dev";
+import { apiRequest } from "../types/api";
 
 export async function startConversation(
-  lessonId: number
+  lessonId: number,
+  token: string
 ): Promise<Conversation> {
-
-   console.log(
-    "STARTING CONVERSATION FOR LESSON:",
-    lessonId
-  );
-
-  const response = await fetch(
-    `${API_URL}/conversations/start`,
+  return apiRequest<Conversation>(
+    "/conversations/start",
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify({
         lesson_id: lessonId,
       }),
-    }
+    },
+    token
   );
-
-  console.log(
-    "START CONVERSATION STATUS:",
-    response.status
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text();
-
-    console.log(
-      "START CONVERSATION ERROR:",
-      errorText
-    );
-
-    throw new Error(
-      `Failed to start conversation: ${response.status}`
-    );
-  }
-
-  return response.json();
 }
 
 export async function sendConversationMessage(
   conversationId: number,
-  message: string
+  message: string,
+  token: string
 ): Promise<ConversationTurn> {
-  const response = await fetch(
-    `${API_URL}/conversations/${conversationId}/messages`,
+  return apiRequest<ConversationTurn>(
+    `/conversations/${conversationId}/messages`,
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify({
         message,
       }),
-    }
+    },
+    token
   );
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to send message: ${response.status}`
-    );
-  }
-
-  return response.json();
 }
 
 export async function getConversationMessages(
-  conversationId: number
+  conversationId: number,
+  token: string
 ): Promise<ConversationMessage[]> {
-  const response = await fetch(
-    `${API_URL}/conversations/${conversationId}/messages`
+  return apiRequest<ConversationMessage[]>(
+    `/conversations/${conversationId}/messages`,
+    {
+      method: "GET",
+    },
+    token
   );
+}
 
-  if (!response.ok) {
-    throw new Error(
-      `Failed to load messages: ${response.status}`
-    );
-  }
+export async function getConversation(
+  conversationId: number,
+  token: string
+): Promise<Conversation> {
+  return apiRequest<Conversation>(
+    `/conversations/${conversationId}`,
+    {
+      method: "GET",
+    },
+    token
+  );
+}
 
-  return response.json();
+export async function getConversations(
+  token: string
+): Promise<Conversation[]> {
+  return apiRequest<Conversation[]>(
+    "/conversations",
+    {
+      method: "GET",
+    },
+    token
+  );
 }

@@ -31,6 +31,8 @@ import { transcribeAudio } from "../services/sttService";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/AppNavigator";
 
+import { useAuth } from "../context/AuthContext";
+
 import { useAudioPlayer } from "expo-audio";
 import * as FileSystem from "expo-file-system/legacy";
 
@@ -62,6 +64,8 @@ export default function ConversationScreen({
   navigation,
 }: Props) {
   const { lessonId } = route.params;
+
+  const { token } = useAuth();
 
   const player = useAudioPlayer(null);
 
@@ -230,7 +234,7 @@ export default function ConversationScreen({
 
       const [conversation , lesson] =
         await Promise.all([
-          startConversation(lessonId),
+          startConversation(lessonId, token!),
           getLesson(lessonId),
         ]);
 
@@ -415,7 +419,8 @@ export default function ConversationScreen({
         const result =
           await sendConversationMessage(
             conversationId,
-            userMessage
+            userMessage,
+            token!
           );
 
         console.log("Conversation result:", result);

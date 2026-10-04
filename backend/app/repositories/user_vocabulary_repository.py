@@ -49,8 +49,6 @@ class UserVocabularyRepository:
         user_vocabulary: UserVocabulary,
     ):
         db.add(user_vocabulary)
-        db.commit()
-        db.refresh(user_vocabulary)
 
         return user_vocabulary
 

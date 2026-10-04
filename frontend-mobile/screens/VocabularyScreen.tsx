@@ -248,15 +248,6 @@ export default function VocabularyScreen({
 
         <TouchableOpacity
           style={styles.navButton}
-        >
-          <Text style={styles.navItem}>
-            💬
-          </Text>
-        </TouchableOpacity>
-
-
-        <TouchableOpacity
-          style={styles.navButton}
           onPress={() =>
             navigation.navigate(
               "Profile"
