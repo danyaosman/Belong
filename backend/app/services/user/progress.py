@@ -87,8 +87,6 @@ def add_xp(db: Session, user: User, amount: int) -> int:
 
     user.xp += amount
 
-    db.refresh(user)
-
     return user.xp
 
 
