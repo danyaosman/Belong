@@ -30,6 +30,7 @@ class ConversationResponse(BaseModel):
     character_id: int
     character_avatar_url: str | None = None
     current_step: int
+    total_steps: int
     status: ConversationStatus
     started_at: datetime
     ended_at: datetime | None = None
@@ -60,3 +61,5 @@ class ConversationTurnResponse(BaseModel):
     hint: str | None = None
     current_step: int
     completed: bool
+    abandoned: bool
+    xp_earned: int | None = None

@@ -46,6 +46,11 @@ class Conversation(Base):
         nullable=False,
     )
 
+    had_mistake: Mapped[bool] = mapped_column(
+        default=False,
+        nullable=False,
+    )
+
     status: Mapped[ConversationStatus] = mapped_column(
         SQLEnum(ConversationStatus),
         default=ConversationStatus.ACTIVE,

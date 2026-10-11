@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -7,10 +7,17 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+
+import {
+  AudioModule,
+  RecordingPresets,
+  setAudioModeAsync,
+  useAudioRecorder,
+  useAudioRecorderState,
+} from "expo-audio";
 
 import { COLORS } from "../theme/colors";
 
@@ -19,8 +26,12 @@ import {
   startConversation,
 } from "../services/conversationService";
 
+import { transcribeAudio } from "../services/sttService";
+
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/AppNavigator";
+
+import { useAuth } from "../context/AuthContext";
 
 import { useAudioPlayer } from "expo-audio";
 import * as FileSystem from "expo-file-system/legacy";
@@ -32,6 +43,9 @@ import {
 import {
   VocabularyItem,
 } from "../types/lesson";
+import type {
+  UserRecording 
+} from "../types/feedback";
 
 import InteractiveMessage from "../components/vocabulary/InteractiveMessage";
 
@@ -51,10 +65,20 @@ export default function ConversationScreen({
 }: Props) {
   const { lessonId } = route.params;
 
+  const { token } = useAuth();
+
   const player = useAudioPlayer(null);
 
   const [conversationId, setConversationId] =
     useState<number | null>(null);
+
+  const [totalSteps, setTotalSteps] =
+    useState(1);
+  const [currentStep, setCurrentStep] = 
+    useState(1);
+
+  const [correctResponses, setCorrectResponses] = useState(0);
+  const [hintsUsed, setHintsUsed] = useState(0);
 
   const [currentMessage, setCurrentMessage] =
     useState("");
@@ -88,6 +112,49 @@ export default function ConversationScreen({
 
   const [vocabulary, setVocabulary] =
     useState<VocabularyItem[]>([]);
+
+  const audioRecorder =
+    useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+
+  const recorderState =
+    useAudioRecorderState(audioRecorder);
+
+  const [recording, setRecording] =
+    useState(false);
+    
+  const [transcribing, setTranscribing] = 
+    useState(false);
+
+  const [showLeaveModal, setShowLeaveModal] = 
+    useState(false);
+
+  const [userRecordings, setUserRecordings] =
+    useState<UserRecording[]>([]);
+
+  const initialized = useRef(false);
+
+  const handleLeavePress = () => {
+    setShowLeaveModal(true);
+  };
+
+  const handleConfirmLeave = () => {
+    setShowLeaveModal(false);
+    navigation.navigate("Home");
+  };
+
+  const getUsedVocabulary = () => {
+    const conversationText = messages
+      .filter((item) => item.sender == "user")
+      .map((item) => item.message)
+      .join(" ")
+      .toLocaleLowerCase("tr-TR");
+
+    return vocabulary.filter((item) =>
+      conversationText.includes(
+        item.turkish.toLocaleLowerCase("tr-TR")
+      )
+    );
+  };
 
   const playCharacterVoice = async (text: string) => {
     try {
@@ -150,7 +217,10 @@ export default function ConversationScreen({
         err
       );
     }
+
   };
+
+
   /*
    * ==========================================================
    * START CONVERSATION
@@ -164,12 +234,14 @@ export default function ConversationScreen({
 
       const [conversation , lesson] =
         await Promise.all([
-          startConversation(lessonId),
+          startConversation(lessonId, token!),
           getLesson(lessonId),
         ]);
 
         setConversationId(conversation.id);
-        
+        setCurrentStep(conversation.current_step);
+        setTotalSteps(conversation.total_steps);
+
         setVocabulary(
           lesson.vocabulary ?? []
         );
@@ -204,85 +276,254 @@ export default function ConversationScreen({
   };
 
   useEffect(() => {
-    initializeConversation();
-  }, []);
-
-  /*
-   * ==========================================================
-   * SEND MESSAGE
-   * ==========================================================
-   */
-
-  const handleSend = async () => {
-    if (
-      !currentMessage.trim() ||
-      conversationId === null ||
-      sending ||
-      completed
-    ) {
+    if(initialized.current){
       return;
     }
 
-    const userMessage = currentMessage.trim();
+    initialized.current = true;
+    initializeConversation();
+  }, []);
 
-    // Show the user's message immediately
-    setMessages((prev) => [
-      ...prev,
-      {
-        sender: "user",
-        message: userMessage,
-      },
-    ]);
+    /*
+   * ==========================================================
+   * RECORD VOICE SST
+   * ==========================================================
+   */
 
-    // Clear the input immediately
-    setCurrentMessage("");
+  useEffect(() => {
+    const setupRecording = async () => {
+      try {
+        const permission =
+          await AudioModule.requestRecordingPermissionsAsync();
+
+        if (!permission.granted) {
+          console.log(
+            "Microphone permission was denied."
+          );
+          return;
+        }
+
+        await setAudioModeAsync({
+          allowsRecording: true,
+          playsInSilentMode: true,
+        });
+
+        console.log(
+          "Microphone permission granted."
+        );
+      } catch (err) {
+        console.error(
+          "Failed to setup microphone:",
+          err
+        );
+      }
+    };
+
+    setupRecording();
+  }, []);
+
+
+  const handleMicrophonePress = async () => {
+    if (sending || completed) {
+      return;
+    }
 
     try {
-      setSending(true);
-      setError(null);
+      if (recording) {
+        console.log("Stopping recording...");
 
-      const result = await sendConversationMessage(
-        conversationId,
-        userMessage
-      );
+        await audioRecorder.stop();
 
-      if (result.correct) {
-        setFeedback(null);
-        setCorrect(true);
-        setHint(null);
+        setRecording(false);
+        setTranscribing(true)
+
+        const uri = audioRecorder.uri;
+
+        if (!uri) {
+          throw new Error(
+            "Recording stopped but no audio file was created."
+          );
+        }
+
+        const recordingUri = 
+        `${FileSystem.cacheDirectory}belong_recording_${Date.now()}.m4a`
+
+        await FileSystem.copyAsync({
+          from: uri,
+          to: recordingUri,
+        });
+
+        console.log(
+          "Recording copied:",
+          recordingUri
+        );
+
+        setError(null);
+
+        console.log(
+          "Sending recording to STT..."
+        );
+
+        const text =
+          await transcribeAudio(uri);
+
+        setTranscribing(false);
+        setSending(true);
+
+        console.log(
+          "STT transcription:",
+          text
+        );
+
+        if (!text.trim()) {
+          throw new Error(
+            "STT returned an empty transcription."
+          );
+        }
+        
+        // Put the transcription into the input state
+        setCurrentMessage(text);
+
+        console.log(
+          "Sending transcription as conversation message..."
+        );
+
+        // Send the transcription directly
+        // instead of waiting for the user to press Send.
+        const userMessage = text.trim();
+
+        setUserRecordings((prev) => [
+          ...prev,
+          {
+            text: userMessage,
+            audioUri: recordingUri,
+          },
+        ]);
+
+        if (conversationId === null) {
+          throw new Error(
+            "Conversation ID is missing."
+          );
+        }
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: "user",
+            message: userMessage,
+          },
+        ]);
+
+        setCurrentMessage("");
+
+        const result =
+          await sendConversationMessage(
+            conversationId,
+            userMessage,
+            token!
+          );
+
+        console.log("Conversation result:", result);
+        console.log("XP earned:", result.xp_earned);
+        
+        setCurrentStep(result.current_step);
+
+        if (result.correct) {
+          setCorrectResponses((prev) => prev + 1);
+
+          setFeedback(null);
+          setCorrect(true);
+          setHint(null);
+        } else {
+          if(result.hint) {
+            setHintsUsed((prev) => prev + 1)
+          }
+          setFeedback(result.message);
+          setCorrect(false);
+          setHint(result.hint);
+        }
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: "character",
+            message: result.message,
+          },
+        ]);
+
+        await playCharacterVoice(
+          result.message
+        );
+
+        if (result.abandoned) {
+          navigation.navigate("Home");
+          return
+        }
+        
+        if (result.completed) {
+          setCompleted(true);
+
+          const finalCorrectResponses =
+            correctResponses + (result.correct ? 1 : 0);
+
+          const finalHintsUsed =
+            hintsUsed +
+            (!result.correct && result.hint ? 1 : 0);
+
+          navigation.navigate("Feedback", {
+            lessonId,
+            conversationId,
+            totalSteps,
+            correctResponses: finalCorrectResponses,
+            hintsUsed: finalHintsUsed,
+            usedVocab: getUsedVocabulary(),
+            userRecordings: [
+              ...userRecordings,
+              {
+                text: userMessage,
+                audioUri: recordingUri,
+              }
+            ],
+            xpEarned: result.xp_earned!,
+          });
+        }
       } else {
-        setFeedback(result.message);
-        setCorrect(false);
-        setHint(result.hint);
-      }
+        console.log(
+          "Starting recording..."
+        );
 
-      // Only add the character response when it arrives
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: "character",
-          message: result.message,
-        },
-      ]);
+        await audioRecorder.prepareToRecordAsync();
 
-      await playCharacterVoice(result.message);
+        audioRecorder.record();
 
-      if (result.completed) {
-        setCompleted(true);
+        setRecording(true);
+        setError(null);
+
+        console.log(
+          "Recording started."
+        );
       }
     } catch (err) {
       console.error(
-        "Failed to send conversation message:",
+        "Recording/STT error:",
         err
       );
 
+      setRecording(false);
+      setSending(false);
+      setTranscribing(false);
+
       setError(
-        "Unable to send your response."
+        "Unable to process your voice response."
       );
     } finally {
       setSending(false);
     }
   };
+
+  const conversationProgress = completed
+    ? 100
+    : 50 + (50 * (currentStep - 1)) / totalSteps;
 
   /*
    * ==========================================================
@@ -362,37 +603,43 @@ export default function ConversationScreen({
       style={styles.container}
     >
 
-      {/* =====================================================
-          TOP BAR
-      ===================================================== */}
+    {/* ========================== */}
+    {/* HEADER */}
+    {/* ========================== */}
 
-      <View style={styles.topBar}>
-        <TouchableOpacity
-          onPress={()=> navigation.goBack()}
-          style={styles.topButton}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.backIcon}>
-            ‹
-          </Text>
-        </TouchableOpacity>
+    <View style={styles.header}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={handleLeavePress}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.backText}>✕</Text>
+      </TouchableOpacity>
 
-        <View style={styles.progressContainer}>
-          <View style={styles.progressTrack}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  width: completed
-                    ? "100%"
-                    : "25%",
-                },
-              ]}
-            />
-          </View>
-        </View>
+      <Text style={styles.headerTitle}>
+        Conversation
+      </Text>
 
+      <View style={styles.headerSpacer} />
+    </View>
+
+
+    {/* ========================== */}
+    {/* CONVERSATION PROGRESS */}
+    {/* ========================== */}
+
+    <View style={styles.progressContainer}>
+      <View style={styles.progressTrack}>
+        <View
+          style={[
+            styles.progressFill,
+            {
+              width: `${conversationProgress}%`,
+            },
+          ]}
+        />
       </View>
+    </View>
 
       {/* =====================================================
           CHARACTER STAGE
@@ -442,23 +689,7 @@ export default function ConversationScreen({
           </View>
         )}
 
-        {/* Call controls */}
-
-        <View
-          style={styles.callControls}
-        >
-          <TouchableOpacity
-            style={styles.endCallButton}
-            onPress={()=> navigation.goBack()}
-            activeOpacity={0.8}
-          >
-            <Text
-              style={styles.endCallIcon}
-            >
-              ✕
-            </Text>
-          </TouchableOpacity>
-        </View>
+  
       </View>
 
       {/* =====================================================
@@ -550,141 +781,117 @@ export default function ConversationScreen({
               </Text>
             )}
         </ScrollView>
-      </View>
-
-      {/* =====================================================
+         {/* =====================================================
           FEEDBACK
       ===================================================== */}
 
-      {feedback && !correct && (
-        <View
-          style={[
-            styles.feedback,
-            styles.incorrectFeedback,
-          ]}
-        >
+        {feedback && !correct && (
           <View
-            style={styles.feedbackHeader}
+            style={[
+              styles.feedback,
+            ]}
           >
             <View
-              style={[
-                styles.feedbackIcon,
-                styles.incorrectIcon,
-              ]}
+              style={styles.feedbackHeader}
             >
-              <Text
-                style={
-                  styles.feedbackIconText
-                }
+              <View
+                style={[
+                  styles.feedbackIcon,
+                  styles.incorrectIcon,
+                ]}
               >
-              !
+                <Text
+                  style={
+                    styles.feedbackIconText
+                  }
+                >
+                !
+                </Text>
+              </View>
+
+              <Text
+                style={styles.feedbackTitle}
+              >
+                Almost...
               </Text>
             </View>
 
-            <Text
-              style={styles.feedbackTitle}
-            >
-              "Almost!"
-            </Text>
+            {hint && (
+              <Text
+                style={styles.hintText}
+              >
+                {hint}
+              </Text>
+            )}
           </View>
+        )}
+      </View>
 
-          {hint && (
-            <Text
-              style={styles.hintText}
-            >
-              {hint}
-            </Text>
-          )}
-        </View>
-      )}
 
-      {/* =====================================================
-          COMPLETED
-      ===================================================== */}
-
-      {completed ? (
-        <View
-          style={styles.completedArea}
-        >
-          <Text
-            style={styles.completedTitle}
-          >
-            🎉 Great job!
-          </Text>
-
-          <Text
-            style={styles.completedText}
-          >
-            You completed the conversation.
-          </Text>
-
-          <TouchableOpacity
-            style={styles.continueButton}
-            onPress={()=> navigation.goBack()}
-            activeOpacity={0.85}
-          >
-            <Text
-              style={
-                styles.continueButtonText
-              }
-            >
-              CONTINUE
-            </Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        /* ===================================================
+        {/* ===================================================
            INPUT
-        =================================================== */
+        =================================================== */}
 
-        <View style={styles.inputArea}>
-          <View
-            style={styles.inputContainer}
-          >
-            <TextInput
-              style={styles.input}
-              value={currentMessage}
-              onChangeText={
-                setCurrentMessage
-              }
-              placeholder="Type your response..."
-              placeholderTextColor={
-                COLORS.muted
-              }
-              multiline
-              editable={!sending}
-              returnKeyType="send"
-              onSubmitEditing={
-                handleSend
-              }
-            />
-
-            <TouchableOpacity
+        <View style={styles.voiceInputArea}>
+          <TouchableOpacity
               style={[
                 styles.micButton,
-                sending &&
+                (sending || transcribing || recording) &&
                   styles.micButtonDisabled,
               ]}
-              onPress={handleSend}
-              disabled={
-                !currentMessage.trim() ||
-                sending
-              }
+              onPress={handleMicrophonePress}
+              disabled={sending || transcribing}
               activeOpacity={0.8}
             >
-              {sending ? (
+              {recording ? (
+                <Text style={styles.micIcon}>⏹️</Text>
+              ) : transcribing || sending ? (
                 <ActivityIndicator
-                  size="small"
+                  size="large"
                   color={COLORS.navy}
                 />
               ) : (
-                <Text
-                  style={styles.micIcon}
-                >
-                  🎤
-                </Text>
+                <Text style={styles.micIcon}>🎤</Text>
               )}
             </TouchableOpacity>
+        </View>
+
+      {/* =====================================================
+          LEAVE CONVO MODAL
+      ===================================================== */}
+
+      {showLeaveModal && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.leaveModal}>
+            <Text style={styles.leaveModalTitle}>
+              Leave this lesson?
+            </Text>
+
+            <Text style={styles.leaveModalText}>
+              Your conversation progress will be lost.
+            </Text>
+
+            <View style={styles.leaveModalButtons}>
+              <TouchableOpacity
+                style={styles.stayButton}
+                onPress={() => setShowLeaveModal(false)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.stayButtonText}>
+                  Stay
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.leaveButton}
+                onPress={handleConfirmLeave}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.leaveButtonText}>
+                  Leave
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       )}
@@ -760,47 +967,60 @@ const styles = StyleSheet.create({
 
   /*
    * ==========================================================
-   * TOP BAR
+   * HEADER
    * ==========================================================
    */
 
-  topBar: {
-    height: 76,
-    paddingHorizontal: 18,
-    paddingTop: 20,
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 8,
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    backgroundColor: COLORS.navy,
+    marginTop: 30,
+    minHeight: 64,
+    position: "relative",
   },
 
-  topButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  headerTitle: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    textAlign: "center",
+    color: COLORS.cream,
+    fontSize: 16,
+    fontWeight: "800",
+  },
+
+  backButton: {
+    width: 35,
+    height: 35,
+    borderRadius: 21,
     backgroundColor: COLORS.navyLight,
     justifyContent: "center",
     alignItems: "center",
   },
 
-  backIcon: {
-    color: COLORS.cream,
-    fontSize: 40,
-    fontWeight: "300",
-    lineHeight: 40,
+  backText: {
+    color: COLORS.creamSoft,
+    fontSize: 18,
+    lineHeight: 26,
+  },
+
+  headerSpacer: {
+    width: 42,
   },
 
   progressContainer: {
-    flex: 1,
-    justifyContent: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 10,
   },
 
   progressTrack: {
     height: 9,
-    borderRadius: 5,
     backgroundColor: COLORS.navySoft,
+    borderRadius: 5,
     overflow: "hidden",
-    marginHorizontal: 10,
   },
 
   progressFill: {
@@ -809,39 +1029,21 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.gold,
   },
 
-  ccButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: COLORS.navyLight,
-    borderWidth: 1,
-    borderColor: COLORS.navySoft,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  ccText: {
-    color: COLORS.goldLight,
-    fontSize: 13,
-    fontWeight: "900",
-    letterSpacing: 1,
-  },
-
   /*
    * ==========================================================
    * CHARACTER
    * ==========================================================
    */
 
-characterStage: {
-  height: "38%",
-  minHeight: 220,
-  backgroundColor: COLORS.navy,
-  alignItems: "center",
-  justifyContent: "flex-end",
-  position: "relative",
-  overflow: "hidden",
-},
+  characterStage: {
+    height: "45%",
+    minHeight: 220,
+    backgroundColor: COLORS.navy,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    position: "relative",
+    overflow: "hidden",
+  },
 
   characterGlow: {
     position: "absolute",
@@ -854,7 +1056,7 @@ characterStage: {
 
   characterImage: {
     width: "78%",
-    height: 310,
+    height: 360,
     marginBottom: 12,
   },
 
@@ -928,16 +1130,6 @@ characterStage: {
    * ==========================================================
    */
 
-  callControls: {
-    position: "absolute",
-    bottom: 15,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 18,
-  },
 
   controlButton: {
     width: 52,
@@ -981,6 +1173,7 @@ characterStage: {
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     overflow: "hidden",
+    position: "relative",
   },
 
   messageList: {
@@ -1134,19 +1327,19 @@ characterStage: {
    */
 
   feedback: {
+    position: "absolute",
+    left: 30,
+    right: 30,
+    bottom: 18,
     paddingHorizontal: 18,
     paddingVertical: 12,
+    marginHorizontal: 13,
     borderTopWidth: 1,
-  },
-
-  correctFeedback: {
-    backgroundColor: COLORS.success,
-    borderTopColor: COLORS.success,
-  },
-
-  incorrectFeedback: {
+    borderRadius: 30,
     backgroundColor: COLORS.error,
     borderTopColor: COLORS.error,
+    zIndex: 10,
+    elevation: 10,
   },
 
   feedbackHeader: {
@@ -1156,8 +1349,8 @@ characterStage: {
   },
 
   feedbackIcon: {
-    width: 25,
-    height: 25,
+    width: 23,
+    height: 23,
     borderRadius: 13,
     justifyContent: "center",
     alignItems: "center",
@@ -1194,6 +1387,7 @@ characterStage: {
     color: COLORS.creamSoft,
     fontSize: 14,
     lineHeight: 18,
+    paddingBottom:5,
     marginTop: 4,
     fontWeight: "700",
   },
@@ -1204,41 +1398,18 @@ characterStage: {
    * ==========================================================
    */
 
-  inputArea: {
-    backgroundColor: COLORS.navy,
-    paddingHorizontal: 15,
-    paddingTop: 10,
-    paddingBottom: 24,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.navyLight,
-  },
-
-  inputContainer: {
-    minHeight: 54,
-    borderRadius: 27,
-    backgroundColor: COLORS.navyLight,
-    borderWidth: 1,
-    borderColor: COLORS.navySoft,
-    flexDirection: "row",
+  voiceInputArea: {
+    backgroundColor: COLORS.cream,
     alignItems: "center",
-    paddingLeft: 18,
-    paddingRight: 6,
-  },
-
-  input: {
-    flex: 1,
-    minHeight: 50,
-    maxHeight: 100,
-    color: COLORS.cream,
-    fontSize: 16,
-    lineHeight: 21,
-    paddingVertical: 12,
+    justifyContent: "center",
+    paddingTop: 16,
+    paddingBottom: 28,
   },
 
   micButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: COLORS.gold,
     justifyContent: "center",
     alignItems: "center",
@@ -1249,60 +1420,80 @@ characterStage: {
   },
 
   micIcon: {
-    fontSize: 19,
+    fontSize: 38,
   },
 
-  /*
-   * ==========================================================
-   * COMPLETED
-   * ==========================================================
-   */
-
-  completedArea: {
-    backgroundColor: COLORS.navy,
-    paddingHorizontal: 20,
-    paddingTop: 14,
-    paddingBottom: 25,
+  modalOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    justifyContent: "center",
     alignItems: "center",
-    borderTopWidth: 1,
-    borderTopColor: COLORS.navyLight,
+    paddingHorizontal: 28,
   },
 
-  completedTitle: {
-    color: COLORS.cream,
-    fontSize: 21,
-    fontWeight: "900",
-    marginBottom: 4,
-  },
-
-  completedText: {
-    color: COLORS.creamSoft,
-    fontSize: 14,
-    marginBottom: 14,
-  },
-
-  continueButton: {
+  leaveModal: {
     width: "100%",
-    height: 54,
-    borderRadius: 16,
+    backgroundColor: COLORS.ivory,
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 28,
+    alignItems: "center",
+  },
+
+  leaveModalTitle: {
+    color: COLORS.navy,
+    fontSize: 22,
+    fontWeight: "800",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+
+  leaveModalText: {
+    color: COLORS.muted,
+    fontSize: 15,
+    lineHeight: 21,
+    textAlign: "center",
+    marginBottom: 26,
+  },
+
+  leaveModalButtons: {
+    width: "100%",
+    flexDirection: "row",
+    gap: 12,
+  },
+
+  stayButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: COLORS.gold,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  stayButtonText: {
+    color: COLORS.navy,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+
+  leaveButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: COLORS.gold,
     justifyContent: "center",
     alignItems: "center",
-
-    shadowColor: COLORS.navy,
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 4,
   },
 
-  continueButtonText: {
+  leaveButtonText: {
     color: COLORS.navy,
     fontSize: 15,
-    fontWeight: "900",
-    letterSpacing: 1.5,
+    fontWeight: "800",
   },
 });

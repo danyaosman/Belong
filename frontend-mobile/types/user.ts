@@ -4,4 +4,6 @@ export interface User {
   username: string;
   native_language: string;
   is_active: boolean;
+  hearts: number;
+  xp: number;
 }

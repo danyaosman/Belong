@@ -9,6 +9,7 @@ export interface Conversation {
   character_id: number;
   character_avatar_url: string | null;
   current_step: number;
+  total_steps: number;
   status: ConversationStatus;
   started_at: string;
   ended_at: string | null;
@@ -29,4 +30,6 @@ export interface ConversationTurn {
   hint: string | null;
   current_step: number;
   completed: boolean;
+  abandoned: boolean;
+  xp_earned?: number;
 }

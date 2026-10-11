@@ -4,6 +4,7 @@ import React, {
 
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -11,6 +12,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 
@@ -69,147 +71,151 @@ export default function LoginScreen({
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={
-        Platform.OS === "ios"
-          ? "padding"
-          : undefined
-      }
-    >
-      <SafeAreaView
-        style={styles.safeArea}
+    <TouchableWithoutFeedback
+    onPress={Keyboard.dismiss}>
+
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={
+          Platform.OS === "ios"
+            ? "padding"
+            : undefined
+        }
       >
-        <View style={styles.content}>
-          <View style={styles.logoSection}>
-            <View style={styles.logoCircle}>
-              <Text
-                style={styles.logoSymbol}
-              >
-                ✦
+        <SafeAreaView
+          style={styles.safeArea}
+        >
+          <View style={styles.content}>
+            <View style={styles.logoSection}>
+              <View style={styles.logoCircle}>
+                <Text
+                  style={styles.logoSymbol}
+                >
+                  ✦
+                </Text>
+              </View>
+
+              <Text style={styles.logo}>
+                Belong
+              </Text>
+
+              <Text style={styles.subtitle}>
+                Learn. Speak. Belong.
               </Text>
             </View>
 
-            <Text style={styles.logo}>
-              Belong
-            </Text>
+            <View style={styles.card}>
+              <Text style={styles.title}>
+                Welcome back
+              </Text>
 
-            <Text style={styles.subtitle}>
-              Learn. Speak. Belong.
-            </Text>
-          </View>
+              <Text style={styles.description}>
+                Continue your language
+                journey.
+              </Text>
 
-          <View style={styles.card}>
-            <Text style={styles.title}>
-              Welcome back
-            </Text>
+              <Text style={styles.label}>
+                Email
+              </Text>
 
-            <Text style={styles.description}>
-              Continue your language
-              journey.
-            </Text>
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="you@example.com"
+                placeholderTextColor={
+                  COLORS.muted
+                }
+                autoCapitalize="none"
+                keyboardType="email-address"
+                autoCorrect={false}
+              />
 
-            <Text style={styles.label}>
-              Email
-            </Text>
+              <Text style={styles.label}>
+                Password
+              </Text>
 
-            <TextInput
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="you@example.com"
-              placeholderTextColor={
-                COLORS.muted
-              }
-              autoCapitalize="none"
-              keyboardType="email-address"
-              autoCorrect={false}
-            />
+              <TextInput
+                style={styles.input}
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Your password"
+                placeholderTextColor={
+                  COLORS.muted
+                }
+                secureTextEntry
+                autoCapitalize="none"
+              />
 
-            <Text style={styles.label}>
-              Password
-            </Text>
+              {error ? (
+                <View
+                  style={styles.errorBox}
+                >
+                  <Text
+                    style={
+                      styles.errorText
+                    }
+                  >
+                    {error}
+                  </Text>
+                </View>
+              ) : null}
 
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Your password"
-              placeholderTextColor={
-                COLORS.muted
-              }
-              secureTextEntry
-              autoCapitalize="none"
-            />
-
-            {error ? (
-              <View
-                style={styles.errorBox}
+              <TouchableOpacity
+                style={[
+                  styles.loginButton,
+                  loading &&
+                    styles.disabledButton,
+                ]}
+                onPress={handleLogin}
+                disabled={loading}
+                activeOpacity={0.85}
               >
-                <Text
-                  style={
-                    styles.errorText
-                  }
-                >
-                  {error}
-                </Text>
-              </View>
-            ) : null}
+                {loading ? (
+                  <ActivityIndicator
+                    color={COLORS.navy}
+                  />
+                ) : (
+                  <Text
+                    style={
+                      styles.loginButtonText
+                    }
+                  >
+                    Log in
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity
-              style={[
-                styles.loginButton,
-                loading &&
-                  styles.disabledButton,
-              ]}
-              onPress={handleLogin}
-              disabled={loading}
-              activeOpacity={0.85}
-            >
-              {loading ? (
-                <ActivityIndicator
-                  color={COLORS.navy}
-                />
-              ) : (
-                <Text
-                  style={
-                    styles.loginButtonText
-                  }
-                >
-                  Log in
-                </Text>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          <View
-            style={styles.registerRow}
-          >
-            <Text
-              style={styles.registerText}
-            >
-              Don't have an account?
-            </Text>
-
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate(
-                  "Register",
-                )
-              }
+            <View
+              style={styles.registerRow}
             >
               <Text
-                style={
-                  styles.registerLink
+                style={styles.registerText}
+              >
+                Don't have an account?
+              </Text>
+
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate(
+                    "Register",
+                  )
                 }
               >
-                Create one
-              </Text>
-            </TouchableOpacity>
+                <Text
+                  style={
+                    styles.registerLink
+                  }
+                >
+                  Create one
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
   );
 }
 

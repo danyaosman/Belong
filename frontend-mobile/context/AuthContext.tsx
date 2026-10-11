@@ -37,6 +37,8 @@ interface AuthContextType {
   ): Promise<void>;
 
   logout(): Promise<void>;
+
+  refreshUser(): Promise<void>;
 }
 
 const AuthContext =
@@ -139,6 +141,13 @@ export function AuthProvider({
     setUser(null);
   }
 
+  async function refreshUser() {
+    if (!token) return;
+
+    const currentUser = await getCurrentUser(token);
+    setUser(currentUser);
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -149,6 +158,7 @@ export function AuthProvider({
         login,
         register,
         logout,
+        refreshUser,
       }}
     >
       {children}

@@ -1,4 +1,6 @@
-from sqlalchemy import Boolean, ForeignKey, Integer, String
+from datetime import datetime
+
+from sqlalchemy import Boolean, ForeignKey, Integer, String, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -32,6 +34,23 @@ class User(Base):
         nullable=False,
     )
 
+    hearts: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=10,
+    )
+
+    xp: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+    )
+
+    last_heart_lost_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
     # current_lesson_id: Mapped[int | None] = mapped_column(
     #    ForeignKey("lessons.id"),
     #    nullable=True,
@@ -43,6 +62,11 @@ class User(Base):
         nullable=False,
     )
 
+    user_vocabulary = relationship(
+        "UserVocabulary",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
     #current_lesson = relationship("Lesson")
     

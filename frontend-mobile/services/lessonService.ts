@@ -1,11 +1,11 @@
-import { Lesson, ConversationContent } from "../types/lesson";
+import { Lesson, LessonContent, ConversationContent } from "../types/lesson";
 
 const API_URL = 
 "https://spectrum-resize-nerd.ngrok-free.dev";
 
 export async function getLesson(
   lessonId: number
-): Promise<Lesson> {
+): Promise<LessonContent> {
   const response = await fetch(
     `${API_URL}/lessons/${lessonId}/content`
   );
@@ -15,6 +15,20 @@ export async function getLesson(
   if (!response.ok) {
     throw new Error(
       `Failed to load lesson: ${response.status}`
+    );
+  }
+
+  return response.json();
+}
+
+export async function getLessons(): Promise<Lesson[]> {
+  const response = await fetch(
+    `${API_URL}/lessons`
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to load lessons: ${response.status}`
     );
   }
 

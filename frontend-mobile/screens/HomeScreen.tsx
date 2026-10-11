@@ -1,15 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+
 import {
   SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  Image
 } from "react-native";
 
 import { COLORS } from "../theme/colors";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/AppNavigator";
+import { useAuth } from "../context/AuthContext";
+
+import { getLessons } from "../services/lessonService";
+import { Lesson } from "../types/lesson";
 
 type Props = NativeStackScreenProps<
   RootStackParamList,
@@ -19,11 +26,34 @@ type Props = NativeStackScreenProps<
 export default function HomeScreen({
   navigation,
 }: Props) {
-  const [screen, setScreen] = useState<
-  "home" | "lesson" | "conversation"
-  >("home");
+  const { user, refreshUser } = useAuth()
 
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  useFocusEffect(
+    useCallback(() => {
+      refreshUser().catch((error) => {
+        console.error("Failed to refresh user:", error);
+      });
+    }, [refreshUser])
+  );
+
+  useEffect(() => {
+    async function loadLessons() {
+      try {
+        const data = await getLessons();
+        setLessons(data);
+      } catch (error) {
+        console.error("Failed to load lessons:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadLessons();
+  }, []);
+  
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -31,76 +61,89 @@ export default function HomeScreen({
           <Text style={styles.logo}>Belong</Text>
 
           <View style={styles.stats}>
-            <Text style={styles.stat}>🔥 7</Text>
-            <Text style={styles.stat}>✦ 1,250</Text>
+            <Image
+              source={require("../assets/heart.png")}
+              style={styles.statIcon}
+              resizeMode="contain"
+             />
+            <Text style={styles.stat}>{user?.hearts ?? 0}</Text>
+              <Image
+                source={require("../assets/xp.png")}
+                style={styles.statIcon}
+                resizeMode="contain"
+            />
+            <Text style={styles.stat}>{user?.xp ?? 0}</Text>
           </View>
         </View>
 
         <View style={styles.content}>
           <Text style={styles.sectionLabel}>LEVEL 1</Text>
           <Text style={styles.title}>Greetings</Text>
-
           <View style={styles.lessonPath}>
-            {/* LESSON 1 */}
-            <TouchableOpacity
-              style={styles.lessonNode}
-              onPress={() => {
-                navigation.navigate("Lesson", {
-                    lessonId:1,
-                });
-            }}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.nodeText}>★</Text>
-            </TouchableOpacity>
+            {lessons.map((lesson, index) => (
+              <TouchableOpacity
+                key={lesson.id}
+                style={[
+                  styles.lessonNode,
+                  index % 2 === 1 && styles.offset,
+                ]}
+                onPress={() => {
+                  navigation.navigate("Lesson", {
+                    lessonId: lesson.id,
+                  });
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.nodeText}>★</Text>
+              </TouchableOpacity>
+            ))}
 
-            {/* LESSON 2 */}
-            <TouchableOpacity
-              style={[styles.lessonNode, styles.offset]}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.nodeText}>★</Text>
-            </TouchableOpacity>
-
-            {/* LISTENING */}
-            <TouchableOpacity
-              style={styles.lessonNode}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.nodeText}>🎧</Text>
-            </TouchableOpacity>
-
-            {/* LESSON 4 */}
-            <TouchableOpacity
-              style={[styles.lessonNode, styles.offset]}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.nodeText}>★</Text>
-            </TouchableOpacity>
+            {lessons.length >= 2 && (
+              <Image
+                source={require("../assets/dilara_peeking.png")}
+                style={styles.dilaraPeeking}
+                resizeMode="contain"
+              />
+            )}
           </View>
         </View>
       </SafeAreaView>
-
       {/* Bottom navigation */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navButton}>
-          <Text style={styles.navItem}>⌂</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.navButton}>
-          <Text style={styles.navItem}>▣</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.navButton}>
-          <Text style={styles.navItem}>💬</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-        style={styles.navButton}
-        onPress={()=> navigation.navigate("Profile")}
-        activeOpacity={0.7}
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => navigation.navigate("Home")}
+          activeOpacity={0.7}
         >
-          <Text style={styles.navItem}>👤</Text>
+          <Image
+            source={require("../assets/home.png")}
+            style={styles.navIcon}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => navigation.navigate("Vocabulary")}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={require("../assets/vocabulary.png")}
+            style={styles.navIcon}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => navigation.navigate("Profile")}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={require("../assets/profile.png")}
+            style={styles.profileIcon}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
       </View>
     </View>
@@ -183,6 +226,15 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.brown,
   },
 
+  dilaraPeeking: {
+    position: "absolute",
+    width: 135,
+    height: 220,
+    left: -28,
+    top: "22%",
+    zIndex: 1,
+  },
+
   offset: {
     marginLeft: 90,
   },
@@ -207,8 +259,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  navItem: {
-    color: COLORS.cream,
-    fontSize: 30,
+  navIcon: {
+    width: 42,
+    height: 42,
   },
+
+  profileIcon: {
+    width: 33,
+    height: 33,
+  },
+
+  statIcon: {
+    width: 25,
+    height: 25,
+  }
+
 });

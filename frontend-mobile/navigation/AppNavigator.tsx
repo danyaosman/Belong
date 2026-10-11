@@ -14,6 +14,11 @@ import HomeScreen from "../screens/HomeScreen";
 import LessonScreen from "../screens/LessonScreen";
 import ConversationScreen from "../screens/ConversationScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import FeedbackScreen from "../screens/FeedbackScreen";
+import VocabularyScreen from "../screens/VocabularyScreen";
+
+import { UserRecording } from "../types/feedback";
+import { VocabularyItem } from "../types/lesson";
 
 export type RootStackParamList = {
   Login: undefined;
@@ -26,6 +31,17 @@ export type RootStackParamList = {
   Conversation: {
     lessonId: number;
   };
+  Feedback: {
+    lessonId: number;
+    conversationId: number;
+    totalSteps: number;
+    correctResponses: number;
+    hintsUsed: number;
+    usedVocab: VocabularyItem[];
+    userRecordings: UserRecording[];
+    xpEarned: number;
+  };
+  Vocabulary: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -53,6 +69,12 @@ export default function AppNavigator() {
             />
 
             <Stack.Screen
+              name="Feedback"
+              component={FeedbackScreen}
+              options={{ headerShown: false }}
+            />
+
+            <Stack.Screen
               name="Conversation"
               component={ConversationScreen}
             />
@@ -60,6 +82,11 @@ export default function AppNavigator() {
             <Stack.Screen
               name="Profile"
               component={ProfileScreen}
+            />
+
+            <Stack.Screen
+              name="Vocabulary"
+              component={VocabularyScreen}
             />
           </>
         ) : (
@@ -73,6 +100,7 @@ export default function AppNavigator() {
               name="Register"
               component={RegisterScreen}
             />
+
           </>
         )}
       </Stack.Navigator>
