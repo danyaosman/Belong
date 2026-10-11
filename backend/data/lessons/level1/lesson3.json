@@ -1,0 +1,244 @@
+{
+  "title": "At the Café",
+  "description": "Learn how to order drinks and food, ask about prices and communicate politely at a café in Turkish.",
+  "level": 1,
+  "lesson_number": 3,
+  "character_id": 5,
+
+  "conversation": {
+    "context": "You visit a busy café in Kadıköy and meet Ömer, a cheerful and talkative waiter. He welcomes you and helps you order something to drink and eat.",
+    "goal": "Order a drink and something to eat, ask about prices and interact politely with a café waiter.",
+    "success_criteria": [
+      "Greet the waiter and say what you would like",
+      "Order a drink in Turkish",
+      "Ask for something to eat",
+      "Ask about the price",
+      "Thank the waiter and end the conversation politely"
+    ],
+    "steps": [
+      {
+        "id": 1,
+        "character_message": "Merhaba! Hoş geldin! Ne içmek istersin?",
+        "expected_intent": "order_a_drink",
+        "target_phrases": [
+          "Bir Türk kahvesi istiyorum",
+          "Bir çay istiyorum",
+          "Bir su istiyorum"
+        ],
+        "hint": "You can say: Bir çay istiyorum, lütfen.",
+        "required": true
+      },
+      {
+        "id": 2,
+        "character_message": "Güzel seçim! Yanında bir şey yemek ister misin?",
+        "expected_intent": "order_food",
+        "target_phrases": [
+          "Bir sandviç istiyorum",
+          "Bir tost istiyorum",
+          "Bir simit istiyorum"
+        ],
+        "hint": "You can say: Bir simit istiyorum.",
+        "required": true
+      },
+      {
+        "id": 3,
+        "character_message": "Tabii! Başka bir şey ister misin?",
+        "expected_intent": "ask_for_something_else",
+        "target_phrases": [
+          "Hayır, teşekkür ederim",
+          "Bir su daha istiyorum",
+          "Evet, bir çay daha istiyorum"
+        ],
+        "hint": "You can say: Hayır, teşekkür ederim.",
+        "required": true
+      },
+      {
+        "id": 4,
+        "character_message": "Afiyet olsun! Yine bekleriz. İyi günler!",
+        "expected_intent": "thank_and_say_goodbye",
+        "target_phrases": [
+          "Teşekkür ederim, görüşürüz",
+          "Sağ ol, iyi günler",
+          "Teşekkürler"
+        ],
+        "hint": "You can say: Teşekkür ederim, görüşürüz!",
+        "required": true
+      }
+    ]
+  },
+
+  "vocabulary": [
+    {
+      "turkish": "Kafe",
+      "english": "Café",
+      "arabic": "مقهى",
+      "pronunciation": "ka-fe",
+      "example_sentence": "Bu kafe çok güzel.",
+      "example_translation": "This café is very nice."
+    },
+    {
+      "turkish": "Çay",
+      "english": "Tea",
+      "arabic": "شاي",
+      "pronunciation": "chai",
+      "example_sentence": "Bir çay istiyorum.",
+      "example_translation": "I would like a tea."
+    },
+    {
+      "turkish": "Türk kahvesi",
+      "english": "Turkish coffee",
+      "arabic": "قهوة تركية",
+      "pronunciation": "turk kah-ve-si",
+      "example_sentence": "Bir Türk kahvesi lütfen.",
+      "example_translation": "A Turkish coffee, please."
+    },
+    {
+      "turkish": "Su",
+      "english": "Water",
+      "arabic": "ماء",
+      "pronunciation": "su",
+      "example_sentence": "Bir su istiyorum.",
+      "example_translation": "I would like a water."
+    },
+    {
+      "turkish": "İstemek",
+      "english": "To want",
+      "arabic": "يريد",
+      "pronunciation": "is-te-mek",
+      "example_sentence": "Bir kahve istiyorum.",
+      "example_translation": "I would like a coffee."
+    },
+    {
+      "turkish": "Lütfen",
+      "english": "Please",
+      "arabic": "من فضلك",
+      "pronunciation": "lut-fen",
+      "example_sentence": "Bir çay, lütfen.",
+      "example_translation": "A tea, please."
+    },
+    {
+      "turkish": "Teşekkür ederim",
+      "english": "Thank you",
+      "arabic": "شكراً",
+      "pronunciation": "te-shek-kur e-de-rim",
+      "example_sentence": "Yardımınız için teşekkür ederim.",
+      "example_translation": "Thank you for your help."
+    },
+    {
+      "turkish": "Ne kadar?",
+      "english": "How much?",
+      "arabic": "بكم؟",
+      "pronunciation": "ne ka-dar",
+      "example_sentence": "Bu kahve ne kadar?",
+      "example_translation": "How much is this coffee?"
+    },
+    {
+      "turkish": "Simit",
+      "english": "Turkish sesame bagel",
+      "arabic": "سميت (خبز تركي بالسمسم)",
+      "pronunciation": "si-mit",
+      "example_sentence": "Bir simit istiyorum.",
+      "example_translation": "I would like a simit."
+    },
+    {
+      "turkish": "Sandviç",
+      "english": "Sandwich",
+      "arabic": "شطيرة",
+      "pronunciation": "sand-vich",
+      "example_sentence": "Bir sandviç alabilir miyim?",
+      "example_translation": "Can I have a sandwich?"
+    },
+    {
+      "turkish": "Afiyet olsun",
+      "english": "Enjoy your meal",
+      "arabic": "صحة وعافية",
+      "pronunciation": "a-fi-yet ol-sun",
+      "example_sentence": "Buyurun, afiyet olsun!",
+      "example_translation": "Here you go, enjoy your meal!"
+    },
+    {
+      "turkish": "Hesap",
+      "english": "Bill",
+      "arabic": "فاتورة الحساب",
+      "pronunciation": "he-sap",
+      "example_sentence": "Hesabı alabilir miyim?",
+      "example_translation": "Can I have the bill?"
+    }
+  ],
+
+  "grammar": [
+    {
+      "title": "Making polite requests",
+      "explanation": "Use 'istiyorum' to say what you want. Add 'lütfen' to make your request more polite. You can also use 'alabilir miyim?' to politely ask for something.",
+      "example": "Bir çay istiyorum, lütfen. / Bir simit alabilir miyim?",
+      "translation": "I would like a tea, please. / Can I have a simit?"
+    }
+  ],
+
+  "exercises": [
+    {
+      "type": "multiple_choice",
+      "question": "How do you say 'I would like a tea' in Turkish?",
+      "explanation": "'Bir çay istiyorum' means 'I would like a tea.'",
+      "options": [
+        {
+          "text": "Bir çay istiyorum",
+          "is_correct": true
+        },
+        {
+          "text": "Bir çay içtim",
+          "is_correct": false
+        },
+        {
+          "text": "Çay nerede?",
+          "is_correct": false
+        },
+        {
+          "text": "Çay sevmiyorum",
+          "is_correct": false
+        }
+      ]
+    },
+    {
+      "type": "translation",
+      "question": "Translate: How much is it?",
+      "explanation": "Use 'Ne kadar?' to ask how much something costs.",
+      "options": [
+        {
+          "text": "Ne kadar?",
+          "is_correct": true
+        },
+        {
+          "text": "Nerelisin?",
+          "is_correct": false
+        },
+        {
+          "text": "Ne yapıyorsun?",
+          "is_correct": false
+        }
+      ]
+    },
+    {
+      "type": "order_words",
+      "question": "Arrange the words to say 'A coffee, please.'",
+      "explanation": "The natural phrase is 'Bir kahve, lütfen.'",
+      "options": [
+        {
+          "text": "Bir",
+          "is_correct": true,
+          "order_index": 1
+        },
+        {
+          "text": "kahve",
+          "is_correct": true,
+          "order_index": 2
+        },
+        {
+          "text": "lütfen",
+          "is_correct": true,
+          "order_index": 3
+        }
+      ]
+    }
+  ]
+}
