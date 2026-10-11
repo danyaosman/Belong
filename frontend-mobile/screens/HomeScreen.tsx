@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+
 import {
   SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  Image
 } from "react-native";
 
 import { COLORS } from "../theme/colors";
@@ -23,10 +26,18 @@ type Props = NativeStackScreenProps<
 export default function HomeScreen({
   navigation,
 }: Props) {
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
 
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshUser().catch((error) => {
+        console.error("Failed to refresh user:", error);
+      });
+    }, [refreshUser])
+  );
 
   useEffect(() => {
     async function loadLessons() {
@@ -50,8 +61,18 @@ export default function HomeScreen({
           <Text style={styles.logo}>Belong</Text>
 
           <View style={styles.stats}>
-            <Text style={styles.stat}>♥ {user?.hearts ?? 0}</Text>
-            <Text style={styles.stat}>★ {user?.xp ?? 0}</Text>
+            <Image
+              source={require("../assets/heart.png")}
+              style={styles.statIcon}
+              resizeMode="contain"
+             />
+            <Text style={styles.stat}>{user?.hearts ?? 0}</Text>
+              <Image
+                source={require("../assets/xp.png")}
+                style={styles.statIcon}
+                resizeMode="contain"
+            />
+            <Text style={styles.stat}>{user?.xp ?? 0}</Text>
           </View>
         </View>
 
@@ -76,34 +97,53 @@ export default function HomeScreen({
                 <Text style={styles.nodeText}>★</Text>
               </TouchableOpacity>
             ))}
+
+            {lessons.length >= 2 && (
+              <Image
+                source={require("../assets/dilara_peeking.png")}
+                style={styles.dilaraPeeking}
+                resizeMode="contain"
+              />
+            )}
           </View>
         </View>
       </SafeAreaView>
-
       {/* Bottom navigation */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navButton}>
-          <Text style={styles.navItem}>⌂</Text>
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => navigation.navigate("Home")}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={require("../assets/home.png")}
+            style={styles.navIcon}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.navButton}
-          onPress={() =>
-            navigation.navigate("Vocabulary")
-          }
+          onPress={() => navigation.navigate("Vocabulary")}
           activeOpacity={0.7}
         >
-          <Text style={styles.navItem}>
-            📖
-          </Text>
+          <Image
+            source={require("../assets/vocabulary.png")}
+            style={styles.navIcon}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
 
-        <TouchableOpacity 
-        style={styles.navButton}
-        onPress={()=> navigation.navigate("Profile")}
-        activeOpacity={0.7}
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => navigation.navigate("Profile")}
+          activeOpacity={0.7}
         >
-          <Text style={styles.navItem}>👤</Text>
+          <Image
+            source={require("../assets/profile.png")}
+            style={styles.profileIcon}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
       </View>
     </View>
@@ -186,6 +226,15 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.brown,
   },
 
+  dilaraPeeking: {
+    position: "absolute",
+    width: 135,
+    height: 220,
+    left: -28,
+    top: "22%",
+    zIndex: 1,
+  },
+
   offset: {
     marginLeft: 90,
   },
@@ -210,8 +259,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  navItem: {
-    color: COLORS.cream,
-    fontSize: 30,
+  navIcon: {
+    width: 42,
+    height: 42,
   },
+
+  profileIcon: {
+    width: 33,
+    height: 33,
+  },
+
+  statIcon: {
+    width: 25,
+    height: 25,
+  }
+
 });

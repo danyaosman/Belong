@@ -11,6 +11,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Image
 } from "react-native";
 
 import {
@@ -223,42 +224,43 @@ export default function VocabularyScreen({
       </SafeAreaView>
 
 
+      {/* Bottom navigation */}
       <View style={styles.bottomNav}>
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => navigation.navigate("Home")}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={require("../assets/home.png")}
+            style={styles.navIcon}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.navButton}
-          onPress={() =>
-            navigation.navigate("Home")
-          }
+          onPress={() => navigation.navigate("Vocabulary")}
+          activeOpacity={0.7}
         >
-          <Text style={styles.navItem}>
-            ⌂
-          </Text>
+          <Image
+            source={require("../assets/vocabulary.png")}
+            style={styles.navIcon}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
-
 
         <TouchableOpacity
           style={styles.navButton}
+          onPress={() => navigation.navigate("Profile")}
+          activeOpacity={0.7}
         >
-          <Text style={styles.navItem}>
-            📖
-          </Text>
+          <Image
+            source={require("../assets/profile.png")}
+            style={styles.profileIcon}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
-
-
-        <TouchableOpacity
-          style={styles.navButton}
-          onPress={() =>
-            navigation.navigate(
-              "Profile"
-            )
-          }
-        >
-          <Text style={styles.navItem}>
-            👤
-          </Text>
-        </TouchableOpacity>
-
       </View>
     </View>
   );
@@ -394,8 +396,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  navItem: {
-    color: COLORS.cream,
-    fontSize: 30,
+  navIcon: {
+    width: 42,
+    height: 42,
+  },
+
+  
+  profileIcon: {
+    width: 33,
+    height: 33,
   },
 });
